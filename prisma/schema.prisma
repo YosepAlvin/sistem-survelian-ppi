@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  permissions String?
+  createdAt   DateTime @default(now())
+  users       User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  ruanganId Int?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  role   Role   @relation(fields: [roleId], references: [id])
+  ruangan Ruangan? @relation(fields: [ruanganId], references: [id])
+  kejadian_verified  KejadianInfeksi[] @relation("verifiedBy")
+  kejadian_created   KejadianInfeksi[] @relation("createdBy")
+  surveilans_ido_verified SurveilansIdo[] @relation("idoVerifiedBy")
+  surveilans_ido_created  SurveilansIdo[] @relation("idoCreatedBy")
+  surveilans_ido_updated SurveilansIdo[] @relation("idoUpdatedBy")
+  notifications        Notification[] @relation("userNotifications")
+  createdNotifications Notification[] @relation("createdNotifications")
+  auditTrails          AuditTrail[]
+  surveilansHarian   SurveilansHarian[] @relation("ipclnSurveilans")
+  createdSuggestions AlatSuggestion[] @relation("suggestionCreator")
+  updatedSuggestions AlatSuggestion[] @relation("suggestionUpdater")
+  requested_pulang   RawatInap[] @relation("requestedPulangBy")
+  verified_pulang   RawatInap[] @relation("verifiedPulangBy")
+  requested_transfers TransferHistory[] @relation("transferRequester")
+  verified_transfers  TransferHistory[] @relation("transferVerifier")
+  reviewed_penggunaan_antibiotik PenggunaanAntibiotik[] @relation("antibiotikReviewedBy")
+}
+
+model AuditTrail {
+  id           Int      @id @default(autoincrement())
+  entityType   String
+  entityId     Int?
+  action       String
+  moduleName   String?
+  userId       Int?
+  userName     String?
+  field        String?
+  previousValue String?
+  newValue     String?
+  ipAddress    String?
+  timestamp    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id                Int       @id @default(autoincrement())
+  type              String
+  category          String
+  title             String
+  message           String
+  payload           String?
+  relatedEntityType String?
+  relatedEntityId   Int?
+  recipientId       Int?
+  createdBy         Int?
+  kejadianInfeksiId Int?
+  pasienId          Int?
+  isRead            Boolean   @default(false)
+  readAt            DateTime?
+  createdAt         DateTime  @default(now())
+
+  recipient User? @relation("userNotifications", fields: [recipientId], references: [id])
+  creator   User? @relation("createdNotifications", fields: [createdBy], references: [id])
+  kejadianInfeksi KejadianInfeksi? @relation(fields: [kejadianInfeksiId], references: [id])
+  pasien    Pasien? @relation(fields: [pasienId], references: [id])
+}
+
+model DeviceThresholdConfig {
+  id          Int      @id @default(autoincrement())
+  jenisAlat   String   @unique
+  hariThreshold Int    @default(7)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model Pasien {
+  id            Int      @id @default(autoincrement())
+  no_rm         String   @unique
+  nama          String
+  tanggal_lahir DateTime
+  usia          Int?
+  jenis_kelamin String
+  alamat        String?
+  rawat_inaps   RawatInap[]
+  notifications Notification[]
+}
+
+model Ruangan {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  kode      String   @unique
+  jenis     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  users     User[]
+  rawat_inaps RawatInap[]
+  surveilans_bulanan SurveilansBulanan[]
+  transfers_asal TransferHistory[] @relation("transferAsal")
+  transfers_tujuan TransferHistory[] @relation("transferTujuan")
+}
+
+model Dokter {
+  id           Int      @id @default(autoincrement())
+  nama         String
+  spesialisasi String
+  isActive     Boolean  @default(true)
+  rawat_inaps  RawatInap[]
+  transfers    TransferHistory[] @relation("transferDokterBaru")
+}
+
+model Diagnosa {
+  id        Int      @id @default(autoincrement())
+  kode_icd  String   @unique
+  nama      String
+  kategori  String?
+  rawat_inaps RawatInap[]
+}
+
+model RawatInap {
+  id             Int       @id @default(autoincrement())
+  pasien_id      Int
+  ruangan_id     Int
+  dokter_id      Int
+  diagnosa_id    Int
+  tanggal_masuk  DateTime
+  tanggal_keluar DateTime?
+  status         String    @default("AKTIF")
+  kondisi_keluar String?
+  status_pulang  String    @default("NONE") // NONE, PENDING, VERIFIED, REJECTED
+  requested_pulang_by_id Int?
+  verified_pulang_by_id Int?
+  tanggal_request_pulang DateTime?
+
+  pasien   Pasien   @relation(fields: [pasien_id], references: [id])
+  ruangan  Ruangan  @relation(fields: [ruangan_id], references: [id])
+  dokter   Dokter   @relation(fields: [dokter_id], references: [id])
+  diagnosa Diagnosa @relation(fields: [diagnosa_id], references: [id])
+  requested_pulang_by User? @relation("requestedPulangBy", fields: [requested_pulang_by_id], references: [id])
+  verified_pulang_by User? @relation("verifiedPulangBy", fields: [verified_pulang_by_id], references: [id])
+
+  alat_terpasang      AlatTerpasang[]
+  surveilans_harian   SurveilansHarian[]
+  operasi             Operasi[]
+  kejadian_infeksi    KejadianInfeksi[]
+  hasil_kultur        HasilKultur[]
+  penggunaan_antibiotik PenggunaanAntibiotik[]
+  transfer_history    TransferHistory[]
+}
+
+model AlatTerpasang {
+  id              Int       @id @default(autoincrement())
+  rawat_inap_id   Int
+  jenis_alat      String
+  tanggal_pasang  DateTime
+  tanggal_lepas   DateTime?
+  device_day      Int?
+  masih_terpasang Boolean   @default(true)
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  saran      AlatSuggestion[]
+}
+
+model AlatSuggestion {
+  id               Int       @id @default(autoincrement())
+  alat_terpasang_id Int
+  jenis_saran      String    // "GANTI_ALAT", "LEPAS_ALAT", "CATATAN"
+  catatan          String
+  status           String    @default("PENDING") // PENDING, DITANGGAPI
+  created_by       Int?
+  created_at       DateTime  @default(now())
+  updated_by       Int?
+  updated_at       DateTime?
+  tanggapan        String?
+
+  alatTerpasang AlatTerpasang @relation(fields: [alat_terpasang_id], references: [id])
+  creator User? @relation("suggestionCreator", fields: [created_by], references: [id])
+  updater User? @relation("suggestionUpdater", fields: [updated_by], references: [id])
+}
+
+model SurveilansHarian {
+  id                  Int      @id @default(autoincrement())
+  rawat_inap_id       Int
+  tanggal             DateTime
+  suhu                Float?
+  uc_terpasang        Boolean  @default(false)
+  ivl_terpasang       Boolean  @default(false)
+  ventilator_terpasang Boolean @default(false)
+  ett_terpasang       Boolean  @default(false)
+  tirah_baring        Boolean  @default(false)
+  ada_dekubitus       Boolean  @default(false)
+  ada_infeksi         Boolean  @default(false)
+  detail_infeksi      String?
+  ipcln_id            Int?
+  status              String   @default("SUBMITTED") // DRAFT, SUBMITTED, UNDER_REVIEW, REVISI, VERIFIED
+  catatan_revisi      String?
+  submitted_at        DateTime?
+  verified_at         DateTime?
+  verified_by         Int?
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  ipcln      User?     @relation("ipclnSurveilans", fields: [ipcln_id], references: [id])
+}
+
+model Operasi {
+  id               Int      @id @default(autoincrement())
+  rawat_inap_id    Int
+  tanggal_operasi  DateTime
+  dx_operasi       String?
+  jenis_operasi    String
+  kategori_operasi String
+  asa_klasifikasi  String?
+  t_time_jam       Float?
+  risk_score       Int?
+  ipcln_id         Int?
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  surveilans_ido SurveilansIdo[]
+}
+
+model SurveilansIdo {
+  id               Int      @id @default(autoincrement())
+  operasi_id       Int
+  tanggal_infeksi  DateTime?
+  ada_infeksi      Boolean  @default(false)
+  ada_antibiotik   Boolean  @default(false)
+  hasil_kultur     String?
+  jenis_pus        String?
+  status_verifikasi String   @default("PENDING")
+  status            String   @default("AKTIF") // AKTIF / SELESAI
+  tanggal_selesai  DateTime?
+  verified_by       Int?
+  verified_at       DateTime?
+  created_by        Int?
+  updated_by        Int?
+  updated_at        DateTime? @updatedAt
+
+  operasi Operasi @relation(fields: [operasi_id], references: [id])
+  verifiedBy User? @relation("idoVerifiedBy", fields: [verified_by], references: [id])
+  createdBy  User? @relation("idoCreatedBy", fields: [created_by], references: [id])
+  updatedBy  User? @relation("idoUpdatedBy", fields: [updated_by], references: [id])
+}
+
+model KejadianInfeksi {
+  id                Int       @id @default(autoincrement())
+  rawat_inap_id     Int
+  jenis_infeksi     String
+  tanggal_kejadian  DateTime
+  hari_ke           Int?
+  sumber_infeksi    String?
+  ipcln_id          Int?
+  status            String    @default("AKTIF") // AKTIF, PENDING_CLOSURE, SELESAI
+  status_verifikasi String    @default("PENDING") // PENDING, UNDER_REVIEW, REVISI, VERIFIED
+  catatan           String?
+  catatan_revisi    String?
+  catatan_penutupan String?
+  tanggal_selesai   DateTime?
+  created_at        DateTime  @default(now())
+  verified_by       Int?
+  verified_at       DateTime?
+  created_by        Int?
+  updated_by        Int?
+  updated_at        DateTime?
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  
+  verifiedBy User? @relation("verifiedBy", fields: [verified_by], references: [id])
+  createdBy  User? @relation("createdBy", fields: [created_by], references: [id])
+
+  phlebitis Phlebitis[]
+  isk       Isk[]
+  hap_vap   HapVap[]
+  iadp      Iadp[]
+  dekubitus Dekubitus[]
+  notifications Notification[]
+}
+
+model Phlebitis {
+  id                  Int      @id @default(autoincrement())
+  kejadian_infeksi_id Int
+  tanggal_identifikasi DateTime
+  hari_ke             Int?
+  lokasi              String?
+  derajat             String?
+  keterangan          String?
+
+  kejadian_infeksi KejadianInfeksi @relation(fields: [kejadian_infeksi_id], references: [id])
+}
+
+model Isk {
+  id                  Int      @id @default(autoincrement())
+  kejadian_infeksi_id Int
+  alat_id             Int?
+  tanggal_identifikasi DateTime
+  gejala              String?
+  hasil_kultur_urine  String?
+
+  kejadian_infeksi KejadianInfeksi @relation(fields: [kejadian_infeksi_id], references: [id])
+}
+
+model HapVap {
+  id                  Int      @id @default(autoincrement())
+  kejadian_infeksi_id Int
+  jenis               String
+  tanggal_identifikasi DateTime
+  hasil_kultur_sputum String?
+
+  kejadian_infeksi KejadianInfeksi @relation(fields: [kejadian_infeksi_id], references: [id])
+}
+
+model Iadp {
+  id                  Int      @id @default(autoincrement())
+  kejadian_infeksi_id Int
+  tanggal_identifikasi DateTime
+  hasil_kultur_darah  String?
+
+  kejadian_infeksi KejadianInfeksi @relation(fields: [kejadian_infeksi_id], references: [id])
+}
+
+model Dekubitus {
+  id                  Int      @id @default(autoincrement())
+  kejadian_infeksi_id Int
+  tanggal_identifikasi DateTime
+  grade               String?
+  lokasi              String?
+  luas                String?
+
+  kejadian_infeksi KejadianInfeksi @relation(fields: [kejadian_infeksi_id], references: [id])
+}
+
+model HasilKultur {
+  id             Int      @id @default(autoincrement())
+  rawat_inap_id  Int
+  jenis_spesimen String
+  mikroorganisme String?
+  sensitivitas   String?
+  tanggal_kultur DateTime
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+}
+
+model Antibiotik {
+  id       Int      @id @default(autoincrement())
+  nama     String
+  golongan String?
+  kode     String?  @unique
+  is_restriksi Boolean @default(false)
+  durasi_maks_hari Int? @default(7)
+  penggunaan_antibiotik PenggunaanAntibiotik[]
+}
+
+model PenggunaanAntibiotik {
+  id             Int       @id @default(autoincrement())
+  rawat_inap_id  Int
+  antibiotik_id  Int
+  tanggal_mulai  DateTime
+  tanggal_selesai DateTime?
+  dosis          String?
+  rute           String?
+  antibiotik_ke  Int?
+  efek_samping   String? // Comma separated list, e.g., "Mual,Diare"
+  catatan_ipcn   String?
+  rekomendasi_ipcn String?
+  tanggal_review DateTime?
+  reviewed_by_id Int?
+  reviewed_by    User? @relation("antibiotikReviewedBy", fields: [reviewed_by_id], references: [id])
+
+  rawat_inap RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  antibiotik Antibiotik @relation(fields: [antibiotik_id], references: [id])
+}
+
+model SurveilansBulanan {
+  id                  Int      @id @default(autoincrement())
+  ruangan_id          Int
+  bulan               Int
+  tahun               Int
+  total_pasien        Int      @default(0)
+  total_hari_rawat    Int      @default(0)
+  total_infus_day     Int      @default(0)
+  total_kateter_day   Int      @default(0)
+  total_ventilator_day Int      @default(0)
+  total_cvl_day       Int      @default(0)
+  ipcn_id             Int?
+
+  ruangan Ruangan @relation(fields: [ruangan_id], references: [id])
+}
+
+model TransferHistory {
+  id               Int      @id @default(autoincrement())
+  rawat_inap_id    Int
+  ruangan_asal_id  Int
+  ruangan_tujuan_id Int
+  tanggal_transfer DateTime
+  alasan           String?
+  dokter_baru_id   Int?
+  requested_by_id  Int
+  verified_by_id   Int?
+  status           String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  created_at       DateTime @default(now())
+  
+  rawat_inap     RawatInap @relation(fields: [rawat_inap_id], references: [id])
+  ruangan_asal   Ruangan   @relation("transferAsal", fields: [ruangan_asal_id], references: [id])
+  ruangan_tujuan Ruangan   @relation("transferTujuan", fields: [ruangan_tujuan_id], references: [id])
+  requested_by   User      @relation("transferRequester", fields: [requested_by_id], references: [id])
+  verified_by    User?     @relation("transferVerifier", fields: [verified_by_id], references: [id])
+  dokter_baru    Dokter?   @relation("transferDokterBaru", fields: [dokter_baru_id], references: [id])
+}
