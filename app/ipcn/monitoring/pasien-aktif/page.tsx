@@ -145,9 +145,9 @@ export default function PasienAktifMonitoringPage() {
     },
     // ── New: Antibiotik Aktif column ─────────────────────────────────────────
     {
-      key: 'antibiotik_nama' as const,
+      key: 'antibiotik_nama',
       label: 'Antibiotik Aktif',
-      render: (row: PasienAktif) => {
+      render: (value: AntibiotikInfo | null, row: PasienAktif) => {
         if (!row.antibiotik) return <span className="text-gray-500 text-xs">-</span>
         return (
           <div className="text-sm">
@@ -158,9 +158,9 @@ export default function PasienAktifMonitoringPage() {
       },
     },
     {
-      key: 'antibiotik_hari' as const,
+      key: 'antibiotik_hari',
       label: 'Hari Ke',
-      render: (row: PasienAktif) => {
+      render: (value: AntibiotikInfo | null, row: PasienAktif) => {
         if (!row.antibiotik) return <span className="text-gray-500 text-xs">-</span>
         const color = row.antibiotik.hari_ke > 10 ? 'text-red-400 font-bold'
           : row.antibiotik.hari_ke > 7 ? 'text-yellow-400 font-bold'
@@ -169,9 +169,9 @@ export default function PasienAktifMonitoringPage() {
       },
     },
     {
-      key: 'antibiotik_status' as const,
+      key: 'antibiotik_status',
       label: 'Status Antibiotik',
-      render: (row: PasienAktif) => {
+      render: (value: AntibiotikInfo | null, row: PasienAktif) => {
         if (!row.antibiotik) return <span className="text-gray-500 text-xs">-</span>
         const tooltip = STATUS_TOOLTIP[row.antibiotik.status as keyof typeof STATUS_TOOLTIP] || ''
         return (
