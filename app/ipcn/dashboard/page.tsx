@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader"
 import { StatCard } from "@/components/ui/StatCard"
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
-import { AlertCircle, Users, Activity, BarChart3, FileText, ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react'
+import { AlertCircle, Users, Activity, BarChart3, FileText, ArrowRight, ShieldCheck, TrendingUp, Bell } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 
 import useSWR from 'swr'
@@ -21,6 +21,44 @@ export default function IPCNDashboard() {
   const { data: session } = useSession()
   const router = useRouter()
   const [isExporting, setIsExporting] = useState(false)
+  const [isGeneratingNotifications, setIsGeneratingNotifications] = useState(false)
+  const [notificationStats, setNotificationStats] = useState({ overdue: 0, perluReview: 0, akanSelesai: 0 })
+  const [antibioticNotifications, setAntibioticNotifications] = useState<any[]>([])
+
+  // Auto-generate notifications on mount
+  useEffect(() => {
+    const generateNotifications = async () => {
+      try {
+        await axios.post('/api/antibiotik/notifications')
+      } catch (error) {
+        console.error('Failed to auto-generate notifications:', error)
+      }
+    }
+    generateNotifications()
+  }, [])
+
+  // Fetch antibiotic notifications on mount
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get('/api/antibiotik/notifications')
+        if (res.data.success) {
+          const notifications = res.data.data || []
+          setAntibioticNotifications(notifications)
+          const stats = { overdue: 0, perluReview: 0, akanSelesai: 0 }
+          notifications.forEach((n: any) => {
+            if (n.type === 'ANTIBIOTIK_OVERDUE') stats.overdue++
+            if (n.type === 'ANTIBIOTIK_PERLU_REVIEW') stats.perluReview++
+            if (n.type === 'ANTIBIOTIK_AKAN_SELESAI') stats.akanSelesai++
+          })
+          setNotificationStats(stats)
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error)
+      }
+    }
+    fetchNotifications()
+  }, [])
 
   const handleExportStats = async () => {
     try {
@@ -39,14 +77,37 @@ export default function IPCNDashboard() {
       setIsExporting(false)
     }
   }
-  
+
+  const handleRefreshNotifications = async () => {
+    try {
+      setIsGeneratingNotifications(true)
+      await axios.post('/api/antibiotik/notifications')
+      const res = await axios.get('/api/antibiotik/notifications')
+      if (res.data.success) {
+        const notifications = res.data.data || []
+        setAntibioticNotifications(notifications)
+        const stats = { overdue: 0, perluReview: 0, akanSelesai: 0 }
+        notifications.forEach((n: any) => {
+          if (n.type === 'ANTIBIOTIK_OVERDUE') stats.overdue++
+          if (n.type === 'ANTIBIOTIK_PERLU_REVIEW') stats.perluReview++
+          if (n.type === 'ANTIBIOTIK_AKAN_SELESAI') stats.akanSelesai++
+        })
+        setNotificationStats(stats)
+      }
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error)
+    } finally {
+      setIsGeneratingNotifications(false)
+    }
+  }
+
   const { data: statsData, error: statsError, isLoading: statsLoading } = useSWR('/api/ipcn/stats', fetcher, {
-    refreshInterval: 30000, // Refresh every 30 seconds
+    refreshInterval: 30000,
     revalidateOnFocus: true
   })
 
   const { data: activityData, isLoading: activityLoading } = useSWR('/api/ipcn/nurse-activity', fetcher, {
-    refreshInterval: 60000, // Refresh every minute
+    refreshInterval: 60000,
   })
 
   const nurseActivity = activityData?.success ? activityData.data : []
@@ -231,6 +292,150 @@ export default function IPCNDashboard() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* 🚨 Alert Monitoring Antibiotik Panel */}
+      <div className="space-y-4">
+        <div className="flex items-end justify-between">
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+              <Bell size={22} className="text-rose-400" />
+              🚨 Alert Monitoring Antibiotik
+            </h3>
+            <p className="text-slate-500 text-sm font-medium">
+              Notifikasi otomatis untuk terapi antibiotik yang perlu perhatian IPCN.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshNotifications}
+              disabled={isGeneratingNotifications}
+              className="gap-2"
+            >
+              <Bell size={16} className={isGeneratingNotifications ? 'animate-spin' : ''} />
+              {isGeneratingNotifications ? "Refreshing..." : "Refresh Notifikasi"}
+            </Button>
+            <Button
+              variant="success"
+              size="sm"
+              onClick={() => router.push('/ipcln/antibiotik')}
+              className="gap-2"
+            >
+              <ArrowRight size={16} />
+              Lihat Semua
+            </Button>
+          </div>
+        </div>
+
+        {isGeneratingNotifications ? (
+          <LoadingSkeleton count={1} rows={3} />
+        ) : (
+          <Card className="bg-[#111827] border-white/5 rounded-[2rem]">
+            <CardContent className="p-6">
+              {notificationStats.overdue === 0 && 
+               notificationStats.perluReview === 0 && 
+               notificationStats.akanSelesai === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-400/20" />
+                  </div>
+                  <p className="text-emerald-400 font-medium">🎉 Tidak ada alert antibiotik saat ini.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Overdue */}
+                  {notificationStats.overdue > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-rose-400">
+                        <AlertCircle size={18} />
+                        <span className="font-bold text-sm uppercase tracking-wider">
+                          {notificationStats.overdue} Antibiotik Overdue
+                        </span>
+                      </div>
+                      <div className="space-y-2 pl-4 border-l-2 border-rose-500/30">
+                        {antibioticNotifications.filter((n: any) => n.type === 'ANTIBIOTIK_OVERDUE').map((n: any) => (
+                          <div 
+                            key={n.id} 
+                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                            onClick={() => router.push(`/ipcln/antibiotik`)}
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm text-white font-medium">{n.message}</p>
+                              <p className="text-xs text-slate-400">
+                                {n.pasien?.nama} • {n.pasien?.no_rm}
+                              </p>
+                            </div>
+                            <ArrowRight size={14} className="text-slate-500 group-hover:text-rose-400 transition-colors" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Perlu Review */}
+                  {notificationStats.perluReview > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-purple-400">
+                        <Activity size={18} />
+                        <span className="font-bold text-sm uppercase tracking-wider">
+                          {notificationStats.perluReview} Perlu Review IPCN
+                        </span>
+                      </div>
+                      <div className="space-y-2 pl-4 border-l-2 border-purple-500/30">
+                        {antibioticNotifications.filter((n: any) => n.type === 'ANTIBIOTIK_PERLU_REVIEW').map((n: any) => (
+                          <div 
+                            key={n.id} 
+                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                            onClick={() => router.push(`/ipcln/antibiotik`)}
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm text-white font-medium">{n.message}</p>
+                              <p className="text-xs text-slate-400">
+                                {n.pasien?.nama} • {n.pasien?.no_rm}
+                              </p>
+                            </div>
+                            <ArrowRight size={14} className="text-slate-500 group-hover:text-purple-400 transition-colors" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Akan Selesai */}
+                  {notificationStats.akanSelesai > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-amber-400">
+                        <Bell size={18} />
+                        <span className="font-bold text-sm uppercase tracking-wider">
+                          {notificationStats.akanSelesai} Akan Selesai
+                        </span>
+                      </div>
+                      <div className="space-y-2 pl-4 border-l-2 border-amber-500/30">
+                        {antibioticNotifications.filter((n: any) => n.type === 'ANTIBIOTIK_AKAN_SELESAI').map((n: any) => (
+                          <div 
+                            key={n.id} 
+                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                            onClick={() => router.push(`/ipcln/antibiotik`)}
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm text-white font-medium">{n.message}</p>
+                              <p className="text-xs text-slate-400">
+                                {n.pasien?.nama} • {n.pasien?.no_rm}
+                              </p>
+                            </div>
+                            <ArrowRight size={14} className="text-slate-500 group-hover:text-amber-400 transition-colors" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* IPCLN Activity Report */}

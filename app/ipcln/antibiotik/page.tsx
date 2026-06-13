@@ -11,6 +11,25 @@ import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import axios from "axios"
 import { exportMultiSheetExcel } from "@/lib/excel-export"
+import { STATUS_TOOLTIP } from "@/lib/antibiotik-status"
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type ExecutiveSummary = {
+  totalBulanIni: number
+  totalRestriksi: number
+  totalPerluReview: number
+  totalOverdue: number
+  totalReviewSelesai: number
+}
+
+type AnalyticsData = {
+  trendBulanan: Array<{ bulan: string; jumlah: number }>
+  top10Antibiotik: Array<{ nama: string; jumlah: number }>
+  statusTerapi: Array<{ name: string; value: number; color: string }>
+  distribusiRuangan: Array<{ ruangan: string; jumlah: number }>
+  executiveSummary: ExecutiveSummary
+}
 
 type AntibiotikData = {
   id: string;
@@ -50,6 +69,16 @@ type MasterAntibiotik = {
   durasi_maks_hari?: number;
 }
 
+type AuditEntry = {
+  id: number;
+  action: string;
+  field: string | null;
+  previousValue: string | null;
+  newValue: string | null;
+  userName: string;
+  timestamp: string;
+}
+
 export default function AntibiotikPage() {
   const { showToast } = useToast()
   const [dataList, setDataList] = useState<AntibiotikData[]>([])
@@ -57,10 +86,17 @@ export default function AntibiotikPage() {
   const [masterAntibiotik, setMasterAntibiotik] = useState<MasterAntibiotik[]>([])
   const [stats, setStats] = useState<any>({})
   const [loading, setLoading] = useState(true)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [selectedAB, setSelectedAB] = useState<AntibiotikData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<AntibiotikData | null>(null)
+  const [executiveSummary, setExecutiveSummary] = useState<ExecutiveSummary | null>(null)
+
+  // Detail modal tab state
+  const [detailTab, setDetailTab] = useState<'detail' | 'riwayat'>('detail')
+  const [auditData, setAuditData] = useState<AuditEntry[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportParams, setExportParams] = useState({
@@ -114,9 +150,54 @@ export default function AntibiotikPage() {
     }
   }, [showToast])
 
+  // Fetch analytics data for executive summary
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true)
+      const res = await axios.get("/api/antibiotik/analytics")
+      setExecutiveSummary(res.data.executiveSummary)
+    } catch (error) {
+      console.error("Error fetching analytics:", error)
+      setExecutiveSummary(null)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
+
+  // Fetch audit trail when "Riwayat Aktivitas" tab is selected
+  const fetchAudit = useCallback(async (id: string) => {
+    try {
+      setAuditLoading(true)
+      const res = await axios.get(`/api/antibiotik/audit?id=${id}`)
+      setAuditData(res.data.data || [])
+    } catch (error) {
+      console.error('Error fetching audit trail:', error)
+      setAuditData([])
+    } finally {
+      setAuditLoading(false)
+    }
+  }, [])
+
+  // Reset tab state when modal closes or a different record is selected
+  const openDetailModal = useCallback((ab: AntibiotikData) => {
+    setSelectedAB(ab)
+    setDetailTab('detail')
+    setAuditData([])
+  }, [])
+
+  const closeDetailModal = useCallback(() => {
+    setSelectedAB(null)
+    setDetailTab('detail')
+    setAuditData([])
+  }, [])
 
   const handleNoRmChange = useCallback((noRm: string) => {
     const foundPasien = pasienList.find(p => p.no_rm === noRm)
@@ -391,7 +472,7 @@ export default function AntibiotikPage() {
       render: (_: string, row: AntibiotikData) => (
         <div className="flex gap-2">
           <button 
-            onClick={() => setSelectedAB(row)}
+            onClick={() => openDetailModal(row)}
             className="text-purple-400 hover:text-purple-200 text-sm transition-colors"
           >
             Detail
@@ -453,6 +534,45 @@ export default function AntibiotikPage() {
         }
       />
 
+      {/* Executive Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <StatCard
+          title="💊 Total Terapi Bulan Ini"
+          value={executiveSummary?.totalBulanIni ?? 0}
+          description="Therapi aktif + selesai"
+          icon={<div className="text-green-400">💊</div>}
+          color="blue"
+        />
+        <StatCard
+          title="🟣 Antibiotik Restriksi"
+          value={executiveSummary?.totalRestriksi ?? 0}
+          description="Sedang dipantau"
+          icon={<div className="text-orange-400">⚠️</div>}
+          color="purple"
+        />
+        <StatCard
+          title="🟡 Perlu Review"
+          value={executiveSummary?.totalPerluReview ?? 0}
+          description="Perlu evaluasi IPCN"
+          icon={<div className="text-yellow-400">🔍</div>}
+          color="amber"
+        />
+        <StatCard
+          title="🔴 Overdue"
+          value={executiveSummary?.totalOverdue ?? 0}
+          description="Melewati tanggal selesai"
+          icon={<div className="text-red-400">⚠️</div>}
+          color="red"
+        />
+        <StatCard
+          title="✅ Review Selesai"
+          value={executiveSummary?.totalReviewSelesai ?? 0}
+          description="Sudah direview IPCN"
+          icon={<div className="text-emerald-400">✔</div>}
+          color="green"
+        />
+      </div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard 
@@ -493,7 +613,7 @@ export default function AntibiotikPage() {
               {perluReviewList.slice(0, 6).map(ab => (
                 <div key={ab.id} 
                   className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700/50"
-                  onClick={() => setSelectedAB(ab)}
+                  onClick={() => openDetailModal(ab)}
                 >
                   <div className="font-bold">{ab.pasien}</div>
                   <div className="text-xs text-gray-400 mb-2">{ab.nama_ab} • Hari {ab.hari_ke}</div>
@@ -551,116 +671,258 @@ export default function AntibiotikPage() {
       {/* Detail Modal */}
       {selectedAB && !showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <CardHeader className="bg-purple-700 text-white p-4">
+          <Card className="max-w-2xl w-full max-h-[90vh] flex flex-col">
+
+            {/* Modal Header */}
+            <CardHeader className="bg-purple-700 text-white p-4 flex-shrink-0">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-white">Detail Penggunaan Antibiotik</CardTitle>
-                <button onClick={() => setSelectedAB(null)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+                <button onClick={closeDetailModal} className="text-white hover:text-gray-200 text-2xl leading-none">&times;</button>
+              </div>
+              {/* Tab Navigation */}
+              <div className="flex gap-1 mt-3">
+                <button
+                  onClick={() => setDetailTab('detail')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    detailTab === 'detail'
+                      ? 'bg-white text-purple-700'
+                      : 'text-purple-200 hover:bg-purple-600'
+                  }`}
+                >
+                  Data Terapi
+                </button>
+                <button
+                  onClick={() => {
+                    setDetailTab('riwayat')
+                    if (auditData.length === 0) fetchAudit(selectedAB.id)
+                  }}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    detailTab === 'riwayat'
+                      ? 'bg-white text-purple-700'
+                      : 'text-purple-200 hover:bg-purple-600'
+                  }`}
+                >
+                  Riwayat Aktivitas
+                </button>
               </div>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-400 mb-1">Nama Pasien</h4>
-                  <p className="font-medium">{selectedAB.pasien}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-400 mb-1">No. RM</h4>
-                  <p>{selectedAB.no_rm}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-400 mb-1">Ruangan</h4>
-                  <p>{selectedAB.ruangan}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-400 mb-1">Dokter Penanggung Jawab</h4>
-                  <p>{selectedAB.dokter || '-'}</p>
-                </div>
-              </div>
 
-              <div className="border-t border-gray-700 pt-4 mb-4">
-                <h4 className="text-lg font-semibold mb-3">Data Terapi</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Antibiotik</h4>
-                    <p className={selectedAB.is_restriksi ? 'font-bold text-orange-400' : 'font-medium'}>
-                      {selectedAB.nama_ab}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Dosis & Rute</h4>
-                    <p>{selectedAB.dosis} ({selectedAB.rute})</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Mulai</h4>
-                    <p>{selectedAB.tgl_mulai}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Selesai</h4>
-                    <p>{selectedAB.tgl_selesai}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Hari Ke</h4>
-                    <p className={getHariKeColor(selectedAB.hari_ke, selectedAB.is_restriksi)}>
-                      {selectedAB.hari_ke}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-400 mb-1">Status</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(selectedAB.status)}`}>
-                      {selectedAB.status === 'AKTIF' ? 'Aktif' : 
-                       selectedAB.status === 'AKAN_SELESAI' ? 'Akan Selesai' :
-                       selectedAB.status === 'SELESAI' ? 'Selesai' :
-                       selectedAB.status === 'OVERDUE' ? 'Overdue' : 'Perlu Review'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* Scrollable Body */}
+            <CardContent className="pt-6 overflow-y-auto flex-1">
 
-              {selectedAB.alasan_review.length > 0 && (
-                <div className="border-t border-gray-700 pt-4 mb-4">
-                  <h4 className="text-lg font-semibold mb-3">Alasan Review</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAB.alasan_review.map((alasan, i) => (
-                      <span key={i} className="bg-purple-900/30 text-purple-400 px-3 py-1 rounded text-sm">
-                        {alasan}
-                      </span>
-                    ))}
+              {/* ── Tab: Data Terapi ── */}
+              {detailTab === 'detail' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Nama Pasien</h4>
+                      <p className="font-medium">{selectedAB.pasien}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-400 mb-1">No. RM</h4>
+                      <p>{selectedAB.no_rm}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Ruangan</h4>
+                      <p>{selectedAB.ruangan}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Dokter Penanggung Jawab</h4>
+                      <p>{selectedAB.dokter || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-700 pt-4 mb-4">
+                    <h4 className="text-lg font-semibold mb-3">Data Terapi</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Antibiotik</h4>
+                        <p className={selectedAB.is_restriksi ? 'font-bold text-orange-400' : 'font-medium'}>
+                          {selectedAB.nama_ab}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Dosis & Rute</h4>
+                        <p>{selectedAB.dosis} ({selectedAB.rute})</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Mulai</h4>
+                        <p>{selectedAB.tgl_mulai}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Selesai</h4>
+                        <p>{selectedAB.tgl_selesai}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Hari Ke</h4>
+                        <p className={getHariKeColor(selectedAB.hari_ke, selectedAB.is_restriksi)}>
+                          {selectedAB.hari_ke}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Status</h4>
+                        <span
+                          title={STATUS_TOOLTIP[selectedAB.status as keyof typeof STATUS_TOOLTIP] || ''}
+                          className={`px-2 py-1 rounded-full text-xs font-semibold cursor-default ${getStatusBadgeColor(selectedAB.status)}`}
+                        >
+                          {selectedAB.status === 'AKTIF' ? 'Aktif' :
+                           selectedAB.status === 'AKAN_SELESAI' ? 'Akan Selesai' :
+                           selectedAB.status === 'SELESAI' ? 'Selesai' :
+                           selectedAB.status === 'OVERDUE' ? 'Overdue' : 'Perlu Review'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedAB.alasan_review.length > 0 && (
+                    <div className="border-t border-gray-700 pt-4 mb-4">
+                      <h4 className="text-lg font-semibold mb-3">Alasan Review</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedAB.alasan_review.map((alasan, i) => (
+                          <span key={i} className="bg-purple-900/30 text-purple-400 px-3 py-1 rounded text-sm">
+                            {alasan}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t border-gray-700 pt-4">
+                    <h4 className="text-lg font-semibold mb-3">Review IPCN</h4>
+                    <FormField label="Catatan IPCN">
+                      <FormTextarea
+                        placeholder="Masukkan catatan review..."
+                        value={formData.catatan_ipcn || selectedAB.catatan_ipcn || ''}
+                        onChange={(e) => setFormData({ ...formData, catatan_ipcn: e.target.value })}
+                      />
+                    </FormField>
+                    <FormField label="Rekomendasi">
+                      <FormTextarea
+                        placeholder="Masukkan rekomendasi..."
+                        value={formData.rekomendasi_ipcn || selectedAB.rekomendasi_ipcn || ''}
+                        onChange={(e) => setFormData({ ...formData, rekomendasi_ipcn: e.target.value })}
+                      />
+                    </FormField>
+                    {selectedAB.tanggal_review && (
+                      <div className="mt-4 text-sm text-gray-400">
+                        <p>Terakhir direview: {selectedAB.tanggal_review}</p>
+                      </div>
+                    )}
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Button variant="outline" onClick={closeDetailModal}>Tutup</Button>
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700"
+                        onClick={() => handleReview(selectedAB)}
+                      >
+                        Simpan Review
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── Tab: Riwayat Aktivitas ── */}
+              {detailTab === 'riwayat' && (
+                <div>
+                  {auditLoading ? (
+                    <div className="flex items-center justify-center py-12 text-gray-400">
+                      <svg className="animate-spin h-5 w-5 mr-3 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Memuat riwayat aktivitas...
+                    </div>
+                  ) : auditData.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                      <div className="text-4xl mb-3 opacity-30">📋</div>
+                      <p className="text-sm italic">Belum ada riwayat aktivitas.</p>
+                    </div>
+                  ) : (
+                    <div className="relative border-l-2 border-purple-800/50 ml-3 space-y-0">
+                      {auditData.map((entry, idx) => {
+                        const actionMeta: Record<string, { label: string; color: string; icon: string }> = {
+                          ANTIBIOTIK_CREATE:  { label: 'Dibuat',          color: 'text-green-400',  icon: '✚' },
+                          ANTIBIOTIK_UPDATE:  { label: 'Diperbarui',      color: 'text-blue-400',   icon: '✎' },
+                          ANTIBIOTIK_SELESAI: { label: 'Ditandai Selesai',color: 'text-gray-400',   icon: '✔' },
+                          ANTIBIOTIK_REVIEW:  { label: 'Review IPCN',     color: 'text-purple-400', icon: '🔍' },
+                          ANTIBIOTIK_DELETE:  { label: 'Dihapus',         color: 'text-red-400',    icon: '✕' },
+                        }
+                        const meta = actionMeta[entry.action] ?? { label: entry.action, color: 'text-gray-400', icon: '•' }
+
+                        let prevParsed: any = null
+                        let newParsed: any = null
+                        try { if (entry.previousValue) prevParsed = JSON.parse(entry.previousValue) } catch {}
+                        try { if (entry.newValue) newParsed = JSON.parse(entry.newValue) } catch {}
+
+                        const formatValue = (raw: string | null, parsed: any) => {
+                          if (!raw || raw === 'null') return null
+                          if (parsed && typeof parsed === 'object') {
+                            return Object.entries(parsed)
+                              .map(([k, v]) => `${k}: ${v ?? '-'}`)
+                              .join(' • ')
+                          }
+                          return raw
+                        }
+
+                        const prevText = formatValue(entry.previousValue, prevParsed)
+                        const newText  = formatValue(entry.newValue, newParsed)
+
+                        return (
+                          <div key={entry.id} className="relative pl-6 pb-6">
+                            {/* Timeline dot */}
+                            <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-gray-900 border-2 border-purple-600 flex items-center justify-center text-[9px] text-purple-400 font-bold">
+                              {idx + 1}
+                            </span>
+
+                            <div className="bg-gray-800/60 border border-gray-700/60 rounded-lg p-3">
+                              {/* Header row */}
+                              <div className="flex items-start justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs font-bold ${meta.color}`}>
+                                    {meta.icon} {meta.label}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    oleh <span className="text-gray-300 font-medium">{entry.userName}</span>
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {new Date(entry.timestamp).toLocaleDateString('id-ID', {
+                                    day: '2-digit', month: 'short', year: 'numeric'
+                                  })}{' '}
+                                  {new Date(entry.timestamp).toLocaleTimeString('id-ID', {
+                                    hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+
+                              {/* Previous → New values */}
+                              {(prevText || newText) && (
+                                <div className="mt-2 space-y-1">
+                                  {prevText && prevText !== 'Tidak ada perubahan terdeteksi' && (
+                                    <div className="text-[11px] bg-red-950/40 border border-red-900/40 rounded px-2 py-1 text-red-300">
+                                      <span className="font-semibold text-red-400">Sebelum: </span>{prevText}
+                                    </div>
+                                  )}
+                                  {newText && newText !== 'Tidak ada perubahan terdeteksi' && (
+                                    <div className="text-[11px] bg-green-950/40 border border-green-900/40 rounded px-2 py-1 text-green-300">
+                                      <span className="font-semibold text-green-400">Sesudah: </span>{newText}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="outline" onClick={closeDetailModal}>Tutup</Button>
                   </div>
                 </div>
               )}
 
-              <div className="border-t border-gray-700 pt-4">
-                <h4 className="text-lg font-semibold mb-3">Review IPCN</h4>
-                <FormField label="Catatan IPCN">
-                  <FormTextarea 
-                    placeholder="Masukkan catatan review..."
-                    value={formData.catatan_ipcn || selectedAB.catatan_ipcn || ''}
-                    onChange={(e) => setFormData({ ...formData, catatan_ipcn: e.target.value })}
-                  />
-                </FormField>
-                <FormField label="Rekomendasi">
-                  <FormTextarea 
-                    placeholder="Masukkan rekomendasi..."
-                    value={formData.rekomendasi_ipcn || selectedAB.rekomendasi_ipcn || ''}
-                    onChange={(e) => setFormData({ ...formData, rekomendasi_ipcn: e.target.value })}
-                  />
-                </FormField>
-                {selectedAB.tanggal_review && (
-                  <div className="mt-4 text-sm text-gray-400">
-                    <p>Terakhir direview: {selectedAB.tanggal_review}</p>
-                  </div>
-                )}
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setSelectedAB(null)}>Tutup</Button>
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700" 
-                    onClick={() => handleReview(selectedAB)}
-                  >
-                    Simpan Review
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

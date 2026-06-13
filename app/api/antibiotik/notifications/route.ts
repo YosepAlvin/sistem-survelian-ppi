@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import { calcAntibiotikStatus } from "@/lib/antibiotik-status"
 
 /**
  * POST /api/antibiotik/notifications
- * Generate notifikasi otomatis untuk antibiotik:
- * - OVERDUE: terapi melewati tanggal selesai
- * - AKAN_SELESAI: terapi selesai dalam ≤2 hari
- * - PERLU_REVIEW: antibiotik restriksi / durasi melebihi batas / efek samping
- *
- * Cron job atau trigger manual bisa memanggil endpoint ini.
- * Notifikasi tidak akan duplikat (skip jika sudah ada yang belum dibaca).
+ * Generate antibiotic alert notifications using the canonical status logic.
+ * Skips duplicates (existing unread notification for same entity + type).
+ * Accessible by IPCN and ADMIN only.
  */
 export async function POST(req: Request) {
   try {
@@ -24,17 +21,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    // Ambil semua terapi yang belum selesai
+    // Only process therapies that have no manual completion date
+    // (tanggal_selesai = null means the therapy is still tracked)
     const activeRecords = await db.penggunaanAntibiotik.findMany({
       where: { tanggal_selesai: null },
       include: {
         antibiotik: true,
-        rawat_inap: {
-          include: { pasien: true, ruangan: true },
-        },
+        rawat_inap: { include: { pasien: true, ruangan: true } },
       },
     })
 
@@ -42,58 +35,49 @@ export async function POST(req: Request) {
     let skipped = 0
 
     for (const ab of activeRecords) {
-      const startDate = new Date(ab.tanggal_mulai)
-      startDate.setHours(0, 0, 0, 0)
-      const hariKe = Math.max(
-        1,
-        1 + Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      const { status } = calcAntibiotikStatus(
+        ab.tanggal_mulai,
+        (ab as any).tanggal_selesai,
+        (ab.antibiotik as any).is_restriksi,
+        (ab.antibiotik as any).durasi_maks_hari,
+        ab.efek_samping
       )
-      const durasiMaks = (ab.antibiotik as any).durasi_maks_hari || 7
+
       const pasienNama = ab.rawat_inap.pasien.nama
       const abNama = (ab.antibiotik as any).nama
 
-      const notifTypes: { type: string; category: string; title: string; message: string }[] = []
+      // Build candidate notifications based on canonical status
+      const candidates: { type: string; title: string; message: string }[] = []
 
-      // 1. OVERDUE: hariKe > durasiMaks dan tidak ada tanggal selesai
-      if (hariKe > durasiMaks) {
-        notifTypes.push({
+      if (status === "OVERDUE") {
+        candidates.push({
           type: "ANTIBIOTIK_OVERDUE",
-          category: "antibiotik",
-          title: `⚠️ Antibiotik Overdue`,
-          message: `${abNama} pasien ${pasienNama} telah melewati batas durasi (hari ke-${hariKe}, maks ${durasiMaks} hari).`,
+          title: "⚠️ Antibiotik Overdue",
+          message: `${abNama} pasien ${pasienNama} telah melewati tanggal selesai.`,
         })
       }
 
-      // 2. AKAN_SELESAI: tanggal_selesai ada dan ≤2 hari lagi
-      if ((ab as any).tanggal_selesai) {
-        const selesaiDate = new Date((ab as any).tanggal_selesai)
-        selesaiDate.setHours(0, 0, 0, 0)
-        const daysTo = Math.ceil((selesaiDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        if (daysTo >= 0 && daysTo <= 2) {
-          notifTypes.push({
-            type: "ANTIBIOTIK_AKAN_SELESAI",
-            category: "antibiotik",
-            title: `⏳ Antibiotik Akan Selesai`,
-            message: `${abNama} pasien ${pasienNama} akan selesai ${daysTo === 0 ? "hari ini" : daysTo === 1 ? "besok" : "dalam 2 hari"}.`,
-          })
-        }
+      if (status === "AKAN_SELESAI") {
+        candidates.push({
+          type: "ANTIBIOTIK_AKAN_SELESAI",
+          title: "⏳ Antibiotik Akan Selesai",
+          message: `${abNama} pasien ${pasienNama} akan selesai besok.`,
+        })
       }
 
-      // 3. PERLU_REVIEW: restriksi atau efek samping
-      if ((ab.antibiotik as any).is_restriksi || ab.efek_samping) {
-        notifTypes.push({
+      if (status === "PERLU_REVIEW") {
+        candidates.push({
           type: "ANTIBIOTIK_PERLU_REVIEW",
-          category: "antibiotik",
-          title: `🔍 Perlu Review IPCN`,
-          message: `${abNama} pasien ${pasienNama} memerlukan review IPCN${(ab.antibiotik as any).is_restriksi ? " (antibiotik restriksi)" : ""}${ab.efek_samping ? ` (efek samping: ${ab.efek_samping})` : ""}.`,
+          title: "🔍 Perlu Review IPCN",
+          message: `${abNama} pasien ${pasienNama} memerlukan review IPCN.`,
         })
       }
 
-      for (const notif of notifTypes) {
-        // Cek duplikat: sudah ada notif yang sama untuk entitas ini yang belum dibaca
+      for (const candidate of candidates) {
+        // Deduplication: skip if unread notification of same type already exists for this record
         const existing = await db.notification.findFirst({
           where: {
-            type: notif.type,
+            type: candidate.type,
             relatedEntityType: "PenggunaanAntibiotik",
             relatedEntityId: ab.id,
             isRead: false,
@@ -107,10 +91,10 @@ export async function POST(req: Request) {
 
         await db.notification.create({
           data: {
-            type: notif.type,
-            category: notif.category,
-            title: notif.title,
-            message: notif.message,
+            type: candidate.type,
+            category: "antibiotik",
+            title: candidate.title,
+            message: candidate.message,
             relatedEntityType: "PenggunaanAntibiotik",
             relatedEntityId: ab.id,
             pasienId: ab.rawat_inap.pasien.id,
@@ -136,7 +120,7 @@ export async function POST(req: Request) {
 
 /**
  * GET /api/antibiotik/notifications
- * Ambil notifikasi antibiotik yang belum dibaca untuk badge & notification center
+ * Returns unread antibiotic notifications for the notification center.
  */
 export async function GET(req: Request) {
   try {
