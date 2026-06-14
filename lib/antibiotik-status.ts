@@ -4,11 +4,11 @@
  * analytics/route.ts, and notifications/route.ts.
  *
  * Status definitions (canonical):
- *   SELESAI       — tanggal_selesai is set (therapy marked done)
- *   OVERDUE       — tanggal_selesai is set AND that date is in the past
- *   AKAN_SELESAI  — tanggal_selesai is set AND ≤2 days remaining
- *   PERLU_REVIEW  — no tanggal_selesai, but: restriksi OR durasi melebihi batas OR efek samping
- *   AKTIF         — no tanggal_selesai, no review triggers
+ *   SELESAI       — tanggal_selesai_aktual is set (therapy completed)
+ *   OVERDUE       — tanggal_selesai_aktual is null AND today > tanggal_rencana_selesai
+ *   AKAN_SELESAI  — tanggal_selesai_aktual is null AND days remaining to tanggal_rencana_selesai <= 2
+ *   PERLU_REVIEW  — active therapy with review triggers (restriksi and/or efek samping)
+ *   AKTIF         — active therapy without triggers
  */
 
 export type AntibiotikStatus =
@@ -36,7 +36,8 @@ export interface AntibiotikStatusResult {
  */
 export function calcAntibiotikStatus(
   tanggal_mulai: Date | string,
-  tanggal_selesai: Date | string | null,
+  tanggal_rencana_selesai: Date | string | null,
+  tanggal_selesai_aktual: Date | string | null,
   is_restriksi: boolean,
   durasi_maks_hari: number | null | undefined,
   efek_samping: string | null | undefined,
@@ -48,54 +49,48 @@ export function calcAntibiotikStatus(
   const startDate = new Date(tanggal_mulai)
   startDate.setHours(0, 0, 0, 0)
 
+  const durasiMaks = durasi_maks_hari ?? 7
+
+  const plannedEndDate = tanggal_rencana_selesai
+    ? new Date(tanggal_rencana_selesai)
+    : new Date(startDate.getTime() + (durasiMaks - 1) * 24 * 60 * 60 * 1000)
+  plannedEndDate.setHours(0, 0, 0, 0)
+
+  if (tanggal_selesai_aktual) {
+    const endDate = new Date(tanggal_selesai_aktual)
+    endDate.setHours(0, 0, 0, 0)
+    const hari_ke = Math.max(
+      1,
+      Math.floor(1 + (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    )
+    return { status: "SELESAI", hari_ke, alasan_review: [] }
+  }
+
   const hari_ke = Math.max(
     1,
     Math.floor(1 + (todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
   )
 
-  const durasiMaks = durasi_maks_hari ?? 7
-
-  // ── SELESAI: end date is set (manually marked complete) ──────────────────
-  if (tanggal_selesai) {
-    const endDate = new Date(tanggal_selesai)
-    endDate.setHours(0, 0, 0, 0)
-    const daysRemaining = Math.ceil(
-      (endDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
-
-    // OVERDUE: end date has already passed
-    if (daysRemaining < 0) {
-      return {
-        status: "OVERDUE",
-        hari_ke,
-        alasan_review: ["Overdue"],
-      }
-    }
-
-    // AKAN_SELESAI: ends today, tomorrow, or the day after
-    if (daysRemaining <= 2) {
-      return {
-        status: "AKAN_SELESAI",
-        hari_ke,
-        alasan_review: [],
-      }
-    }
-
-    // End date set but still in the future → SELESAI marker is not "complete" yet
-    // Treat as AKTIF with no review triggers from the end date alone
-    return {
-      status: "SELESAI",
-      hari_ke,
-      alasan_review: [],
-    }
-  }
-
-  // ── Active therapy (no tanggal_selesai) ─────────────────────────────────
   const alasan_review: string[] = []
 
   if (is_restriksi) alasan_review.push("Antibiotik Restriksi")
-  if (hari_ke > durasiMaks) alasan_review.push(`Durasi > ${durasiMaks} hari`)
   if (efek_samping) alasan_review.push("Efek Samping")
+
+  const daysRemaining = Math.ceil(
+    (plannedEndDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  if (daysRemaining < 0) {
+    return {
+      status: "OVERDUE",
+      hari_ke,
+      alasan_review: [...alasan_review, "Lewat tanggal rencana selesai"],
+    }
+  }
+
+  if (daysRemaining <= 2) {
+    return { status: "AKAN_SELESAI", hari_ke, alasan_review: [] }
+  }
 
   if (alasan_review.length > 0) {
     return { status: "PERLU_REVIEW", hari_ke, alasan_review }
@@ -118,8 +113,40 @@ export function statusLabel(status: AntibiotikStatus): string {
 /** Tooltip text for each status */
 export const STATUS_TOOLTIP: Record<AntibiotikStatus, string> = {
   AKTIF:        "Terapi sedang berjalan",
-  AKAN_SELESAI: "Terapi berakhir dalam 2 hari ke depan",
-  OVERDUE:      "Tanggal selesai telah terlewat",
+  AKAN_SELESAI: "Tanggal rencana selesai dalam 2 hari ke depan",
+  OVERDUE:      "Melewati tanggal rencana selesai",
   PERLU_REVIEW: "Memerlukan evaluasi IPCN",
   SELESAI:      "Terapi telah diselesaikan",
+}
+
+export type AntibiotikStatusCounts = Record<AntibiotikStatus, number> & {
+  perlu_review_total: number
+}
+
+export function countAntibiotikStatuses(records: any[], today?: Date): AntibiotikStatusCounts {
+  const counts: Record<AntibiotikStatus, number> = {
+    AKTIF: 0,
+    AKAN_SELESAI: 0,
+    OVERDUE: 0,
+    PERLU_REVIEW: 0,
+    SELESAI: 0,
+  }
+
+  for (const ab of records) {
+    const { status } = calcAntibiotikStatus(
+      ab.tanggal_mulai,
+      ab.tanggal_rencana_selesai,
+      ab.tanggal_selesai_aktual,
+      ab.antibiotik?.is_restriksi ?? false,
+      ab.antibiotik?.durasi_maks_hari,
+      ab.efek_samping,
+      today
+    )
+    counts[status]++
+  }
+
+  return {
+    ...counts,
+    perlu_review_total: counts.PERLU_REVIEW + counts.OVERDUE,
+  }
 }

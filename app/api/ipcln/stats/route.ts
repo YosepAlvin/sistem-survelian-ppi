@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
-import { calcAntibiotikStatus } from "@/lib/antibiotik-status"
+import { countAntibiotikStatuses } from "@/lib/antibiotik-status"
 
 export async function GET() {
   try {
@@ -40,29 +40,7 @@ export async function GET() {
       include: { antibiotik: true },
     })
 
-    let aktif = 0
-    let akanSelesai = 0
-    let overdue = 0
-    let perluReview = 0
-    let selesai = 0
-
-    allAntibiotics.forEach((ab: any) => {
-      const { status } = calcAntibiotikStatus(
-        ab.tanggal_mulai,
-        ab.tanggal_selesai,
-        ab.antibiotik.is_restriksi,
-        ab.antibiotik.durasi_maks_hari,
-        ab.efek_samping
-      )
-
-      switch (status) {
-        case "AKTIF":        aktif++;        break
-        case "AKAN_SELESAI": akanSelesai++;  break
-        case "OVERDUE":      overdue++;      break
-        case "PERLU_REVIEW": perluReview++;  break
-        case "SELESAI":      selesai++;      break
-      }
-    })
+    const abCounts = countAntibiotikStatuses(allAntibiotics)
 
     // ── Other module counts ───────────────────────────────────────────────────
     const [pasienAktifCount, kejadianCount, operasiCount] = await db.$transaction([
@@ -91,7 +69,13 @@ export async function GET() {
         pasienAktif: pasienAktifCount,
         kejadianInfeksi: kejadianCount,
         tindakanOperasi: operasiCount,
-        antibiotics: { aktif, akanSelesai, overdue, perluReview, selesai },
+        antibiotics: {
+          aktif: abCounts.AKTIF,
+          akanSelesai: abCounts.AKAN_SELESAI,
+          overdue: abCounts.OVERDUE,
+          perluReview: abCounts.perlu_review_total,
+          selesai: abCounts.SELESAI,
+        },
       },
     })
   } catch (error: any) {

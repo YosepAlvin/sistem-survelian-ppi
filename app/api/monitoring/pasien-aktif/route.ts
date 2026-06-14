@@ -48,7 +48,8 @@ export async function GET() {
       if (activeAntibiotik) {
         const { status, hari_ke } = calcAntibiotikStatus(
           (activeAntibiotik as any).tanggal_mulai,
-          (activeAntibiotik as any).tanggal_selesai,
+          (activeAntibiotik as any).tanggal_rencana_selesai,
+          (activeAntibiotik as any).tanggal_selesai_aktual,
           (activeAntibiotik as any).antibiotik.is_restriksi,
           (activeAntibiotik as any).antibiotik.durasi_maks_hari,
           (activeAntibiotik as any).efek_samping

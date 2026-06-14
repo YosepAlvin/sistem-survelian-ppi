@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { buildAuditTrailEntry } from "@/lib/audit-trail"
-import { calcAntibiotikStatus } from "@/lib/antibiotik-status"
+import { calcAntibiotikStatus, countAntibiotikStatuses } from "@/lib/antibiotik-status"
 
 // ─── GET ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,8 @@ export async function GET() {
     const formatted = antibiotics.map((ab: any) => {
       const { status, hari_ke, alasan_review } = calcAntibiotikStatus(
         ab.tanggal_mulai,
-        ab.tanggal_selesai,
+        ab.tanggal_rencana_selesai,
+        ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
         ab.efek_samping
@@ -68,15 +69,14 @@ export async function GET() {
       }
     })
 
+    const abCounts = countAntibiotikStatuses(antibiotics)
     const stats = {
       total: formatted.length,
-      aktif: formatted.filter((ab) => ab.status === "AKTIF").length,
-      akan_selesai: formatted.filter((ab) => ab.status === "AKAN_SELESAI").length,
-      overdue: formatted.filter((ab) => ab.status === "OVERDUE").length,
-      perlu_review: formatted.filter(
-        (ab) => ab.status === "PERLU_REVIEW" || ab.status === "OVERDUE"
-      ).length,
-      selesai: formatted.filter((ab) => ab.status === "SELESAI").length,
+      aktif: abCounts.AKTIF,
+      akan_selesai: abCounts.AKAN_SELESAI,
+      overdue: abCounts.OVERDUE,
+      perlu_review: abCounts.perlu_review_total,
+      selesai: abCounts.SELESAI,
     }
 
     return NextResponse.json({ penggunaan: formatted, master: masterAntibiotics, stats })
@@ -203,6 +203,7 @@ export async function PUT(req: Request) {
     const recordId = parseInt(data.id)
     const isMarkComplete = data.markComplete === true
     const isReview = data.is_review === true
+    const role = (session.user as any).role
 
     // ── Load existing record BEFORE update (for audit previous value) ────────
     const existing = await db.penggunaanAntibiotik.findUnique({
@@ -232,8 +233,11 @@ export async function PUT(req: Request) {
       if (data.catatan_ipcn !== undefined) updateData.catatan_ipcn = data.catatan_ipcn
       if (data.rekomendasi_ipcn !== undefined) updateData.rekomendasi_ipcn = data.rekomendasi_ipcn
       if (isReview) {
+        if (role !== "IPCN" && role !== "ADMIN") {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
         updateData.tanggal_review = new Date()
-        updateData.reviewed_by_id = (session.user as any).id
+        updateData.reviewed_by_id = Number((session.user as any).id)
       }
       if (data.nama_ab) {
         const abMaster = await db.antibiotik.upsert({

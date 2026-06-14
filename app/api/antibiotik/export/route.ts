@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
-import { calcAntibiotikStatus, statusLabel } from "@/lib/antibiotik-status"
+import { calcAntibiotikStatus, countAntibiotikStatuses, statusLabel } from "@/lib/antibiotik-status"
 
 export async function GET(req: Request) {
   try {
@@ -33,15 +33,37 @@ export async function GET(req: Request) {
       orderBy: { tanggal_mulai: "desc" },
     })
 
+    // Explicit typing for PenggunaanAntibiotik records with missing fields
+    type AntibioticRecord = {
+      tanggal_mulai: Date
+      tanggal_rencana_selesai: Date | null
+      tanggal_selesai_aktual: Date | null
+      efek_samping: string | null
+      antibiotik: { is_restriksi: boolean; durasi_maks_hari: number | null }
+      rawat_inap: {
+        pasien: { no_rm: string; nama: string }
+        ruangan: { nama?: string }
+        diagnosa?: { nama?: string }
+      }
+      [key: string]: any
+    }
+
+    // Type assertion to include missing fields from PenggunaanAntibiotik model
+    const recordsWithType: AntibioticRecord[] = allRecords.map((ab: any) => ({
+      ...ab,
+      tanggal_rencana_selesai: (ab as any).tanggal_rencana_selesai ?? null,
+      tanggal_selesai_aktual: (ab as any).tanggal_selesai_aktual ?? null,
+    }))
+
     // Filter by month / year on tanggal_mulai
-    const byMonth = allRecords.filter((ab: any) => {
+    const byMonth: AntibioticRecord[] = recordsWithType.filter((ab: any) => {
       if (!month || !year) return true
       const d = new Date(ab.tanggal_mulai)
       return d.getMonth() + 1 === parseInt(month) && d.getFullYear() === parseInt(year)
     })
 
     // Filter by antibiotic name
-    const finalRecords = byMonth.filter((ab: any) =>
+    const finalRecords: AntibioticRecord[] = byMonth.filter((ab: any) =>
       antibiotikFilter ? ab.antibiotik.nama === antibiotikFilter : true
     )
 
@@ -63,7 +85,8 @@ export async function GET(req: Request) {
     const sheet1Data = finalRecords.map((ab: any) => {
       const { status, hari_ke } = calcAntibiotikStatus(
         ab.tanggal_mulai,
-        ab.tanggal_selesai,
+        ab.tanggal_rencana_selesai,
+        ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
         ab.efek_samping
@@ -109,7 +132,8 @@ export async function GET(req: Request) {
 
       const { status } = calcAntibiotikStatus(
         ab.tanggal_mulai,
-        ab.tanggal_selesai,
+        ab.tanggal_rencana_selesai,
+        ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
         ab.efek_samping
@@ -126,24 +150,13 @@ export async function GET(req: Request) {
 
     // ── Sheet 3: Monitoring IPCN — status counts ───────────────────────────
     const sheet3Headers = ["Status", "Jumlah"]
-    const statusCounts = { AKTIF: 0, AKAN_SELESAI: 0, OVERDUE: 0, PERLU_REVIEW: 0, SELESAI: 0 }
-
-    finalRecords.forEach((ab: any) => {
-      const { status } = calcAntibiotikStatus(
-        ab.tanggal_mulai,
-        ab.tanggal_selesai,
-        ab.antibiotik.is_restriksi,
-        ab.antibiotik.durasi_maks_hari,
-        ab.efek_samping
-      )
-      if (status in statusCounts) statusCounts[status as keyof typeof statusCounts]++
-    })
+    const statusCounts = countAntibiotikStatuses(finalRecords)
 
     const sheet3Data = [
       ["Terapi Aktif", statusCounts.AKTIF],
       ["Akan Selesai", statusCounts.AKAN_SELESAI],
       ["Overdue", statusCounts.OVERDUE],
-      ["Perlu Review IPCN", statusCounts.PERLU_REVIEW],
+      ["Perlu Review IPCN", statusCounts.perlu_review_total],
       ["Selesai", statusCounts.SELESAI],
     ]
 
@@ -161,7 +174,8 @@ export async function GET(req: Request) {
       .filter((ab: any) => {
         const { status } = calcAntibiotikStatus(
           ab.tanggal_mulai,
-          ab.tanggal_selesai,
+          ab.tanggal_rencana_selesai,
+          ab.tanggal_selesai_aktual,
           ab.antibiotik.is_restriksi,
           ab.antibiotik.durasi_maks_hari,
           ab.efek_samping
@@ -177,7 +191,8 @@ export async function GET(req: Request) {
       .map((ab: any) => {
         const { alasan_review } = calcAntibiotikStatus(
           ab.tanggal_mulai,
-          ab.tanggal_selesai,
+          ab.tanggal_rencana_selesai,
+          ab.tanggal_selesai_aktual,
           ab.antibiotik.is_restriksi,
           ab.antibiotik.durasi_maks_hari,
           ab.efek_samping

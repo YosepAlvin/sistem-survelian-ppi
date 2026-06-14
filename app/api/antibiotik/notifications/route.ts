@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     // Only process therapies that have no manual completion date
     // (tanggal_selesai = null means the therapy is still tracked)
     const activeRecords = await db.penggunaanAntibiotik.findMany({
-      where: { tanggal_selesai: null },
+      where: { tanggal_selesai_aktual: null },
       include: {
         antibiotik: true,
         rawat_inap: { include: { pasien: true, ruangan: true } },
@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     for (const ab of activeRecords) {
       const { status } = calcAntibiotikStatus(
         ab.tanggal_mulai,
-        (ab as any).tanggal_selesai,
+        ab.tanggal_rencana_selesai,
+        ab.tanggal_selesai_aktual,
         (ab.antibiotik as any).is_restriksi,
         (ab.antibiotik as any).durasi_maks_hari,
         ab.efek_samping
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
         candidates.push({
           type: "ANTIBIOTIK_OVERDUE",
           title: "⚠️ Antibiotik Overdue",
-          message: `${abNama} pasien ${pasienNama} telah melewati tanggal selesai.`,
+          message: `${abNama} pasien ${pasienNama} telah melewati batas durasi terapi.`,
         })
       }
 
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
         candidates.push({
           type: "ANTIBIOTIK_AKAN_SELESAI",
           title: "⏳ Antibiotik Akan Selesai",
-          message: `${abNama} pasien ${pasienNama} akan selesai besok.`,
+          message: `${abNama} pasien ${pasienNama} mendekati batas durasi terapi.`,
         })
       }
 

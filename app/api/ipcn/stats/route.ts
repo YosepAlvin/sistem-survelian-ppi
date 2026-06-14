@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import { countAntibiotikStatuses } from "@/lib/antibiotik-status"
 
 export async function GET() {
   try {
@@ -82,6 +83,19 @@ export async function GET() {
       },
     })
 
+    const allAntibiotics = await db.penggunaanAntibiotik.findMany({
+      include: { antibiotik: true },
+    })
+
+    const abCounts = countAntibiotikStatuses(allAntibiotics)
+    const antibioticStats = {
+      aktif: abCounts.AKTIF,
+      akan_selesai: abCounts.AKAN_SELESAI,
+      overdue: abCounts.OVERDUE,
+      perlu_review: abCounts.perlu_review_total,
+      selesai: abCounts.SELESAI,
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -93,6 +107,7 @@ export async function GET() {
         deviceAlertHariIni: deviceAlertsAll,
         pendingNotifications,
         pendingClosure: counts[6],
+        antibiotics: antibioticStats,
       },
     })
   } catch (error: any) {

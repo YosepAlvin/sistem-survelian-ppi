@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import axios from "axios"
 import { exportMultiSheetExcel } from "@/lib/excel-export"
 import { STATUS_TOOLTIP } from "@/lib/antibiotik-status"
+import { useSession } from "next-auth/react"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,7 @@ type AuditEntry = {
 
 export default function AntibiotikPage() {
   const { showToast } = useToast()
+  const { data: session } = useSession()
   const [dataList, setDataList] = useState<AntibiotikData[]>([])
   const [pasienList, setPasienList] = useState<PasienData[]>([])
   const [masterAntibiotik, setMasterAntibiotik] = useState<MasterAntibiotik[]>([])
@@ -111,6 +113,9 @@ export default function AntibiotikPage() {
     antibiotik: '',
     search: ''
   })
+
+  const canReviewIPCN =
+    (session?.user as any)?.role === "IPCN" || (session?.user as any)?.role === "ADMIN"
   const [formData, setFormData] = useState({
     id: '',
     no_rm: '',
@@ -794,6 +799,7 @@ export default function AntibiotikPage() {
                         placeholder="Masukkan catatan review..."
                         value={formData.catatan_ipcn || selectedAB.catatan_ipcn || ''}
                         onChange={(e) => setFormData({ ...formData, catatan_ipcn: e.target.value })}
+                        readOnly={!canReviewIPCN}
                       />
                     </FormField>
                     <FormField label="Rekomendasi">
@@ -801,6 +807,7 @@ export default function AntibiotikPage() {
                         placeholder="Masukkan rekomendasi..."
                         value={formData.rekomendasi_ipcn || selectedAB.rekomendasi_ipcn || ''}
                         onChange={(e) => setFormData({ ...formData, rekomendasi_ipcn: e.target.value })}
+                        readOnly={!canReviewIPCN}
                       />
                     </FormField>
                     {selectedAB.tanggal_review && (
@@ -810,12 +817,14 @@ export default function AntibiotikPage() {
                     )}
                     <div className="mt-4 flex justify-end gap-2">
                       <Button variant="outline" onClick={closeDetailModal}>Tutup</Button>
-                      <Button
-                        className="bg-purple-600 hover:bg-purple-700"
-                        onClick={() => handleReview(selectedAB)}
-                      >
-                        Simpan Review
-                      </Button>
+                      {canReviewIPCN && (
+                        <Button
+                          className="bg-purple-600 hover:bg-purple-700"
+                          onClick={() => handleReview(selectedAB)}
+                        >
+                          Simpan Review
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </>

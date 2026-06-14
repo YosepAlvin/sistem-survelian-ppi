@@ -374,7 +374,8 @@ model PenggunaanAntibiotik {
   rawat_inap_id  Int
   antibiotik_id  Int
   tanggal_mulai  DateTime
-  tanggal_selesai DateTime?
+  tanggal_rencana_selesai DateTime?
+  tanggal_selesai_aktual DateTime?
   dosis          String?
   rute           String?
   antibiotik_ke  Int?
