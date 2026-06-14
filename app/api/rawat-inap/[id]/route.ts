@@ -202,7 +202,36 @@ export async function PUT(
       
       return NextResponse.json({ success: true, data: updated })
     } else if (action === 'VERIFY_PULANG') {
-      // IPCN verify pulang
+      // IPCN verify pulang - VALIDASI Dulu infeksi aktif & alat terpasang
+      const rawatInap = await db.rawatInap.findUnique({
+        where: { id: rawatInapId },
+        include: {
+          kejadian_infeksi: true,
+          alat_terpasang: { where: { masih_terpasang: true } }
+        }
+      })
+      
+      // Cek apakah masih ada infeksi aktif
+      const hasActiveInfection = rawatInap?.kejadian_infeksi.some(
+        (infeksi: any) => infeksi.status === "AKTIF"
+      )
+      if (hasActiveInfection) {
+        return NextResponse.json({
+          success: false,
+          message: "Pasien masih memiliki infeksi aktif"
+        }, { status: 400 })
+      }
+      
+      // Cek apakah masih ada alat terpasang
+      const hasActiveDevice = (rawatInap?.alat_terpasang.length || 0) > 0
+      if (hasActiveDevice) {
+        return NextResponse.json({
+          success: false,
+          message: "Masih ada alat kesehatan yang terpasang"
+        }, { status: 400 })
+      }
+      
+      // Jika lulus validasi, baru update status
       const updated = await (db as any).rawatInap.update({
         where: { id: rawatInapId },
         data: {
