@@ -20,9 +20,15 @@ export async function POST(req: Request) {
     for (let i = 0; i < data.length; i++) {
       const item = data[i]
       try {
+        console.log("Processing item", i, ":", item)
+        
         // Validate required fields
         if (!item.nama || !item.kode) {
-          errors.push({ index: i, message: "Nama dan Kode Antibiotik wajib diisi" })
+          errors.push({ 
+            index: i, 
+            item, 
+            message: "Nama dan Kode Antibiotik wajib diisi" 
+          })
           continue
         }
 
@@ -31,22 +37,26 @@ export async function POST(req: Request) {
           where: { kode: item.kode },
           update: {
             nama: item.nama,
-            golongan: item.golongan || undefined,
+            golongan: item.golongan || null,
             is_restriksi: Boolean(item.is_restriksi),
-            durasi_maks_hari: parseInt(item.durasi_maks_hari) || 7,
+            durasi_maks_hari: item.durasi_maks_hari ? parseInt(item.durasi_maks_hari) : 7,
           },
           create: {
             nama: item.nama,
             kode: item.kode,
-            golongan: item.golongan || undefined,
+            golongan: item.golongan || null,
             is_restriksi: Boolean(item.is_restriksi),
-            durasi_maks_hari: parseInt(item.durasi_maks_hari) || 7,
+            durasi_maks_hari: item.durasi_maks_hari ? parseInt(item.durasi_maks_hari) : 7,
           }
         })
         processed.push({ ...antibiotik, action: 'upserted' })
       } catch (err: any) {
         console.error("Error importing item at index", i, ":", err)
-        errors.push({ index: i, message: err.message || "Gagal memproses antibiotik" })
+        errors.push({ 
+          index: i, 
+          item, 
+          message: err.message || "Gagal memproses antibiotik" 
+        })
       }
     }
 

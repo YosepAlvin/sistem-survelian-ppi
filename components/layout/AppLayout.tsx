@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
@@ -11,12 +11,14 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  
   return (
     <div className="min-h-screen bg-[#0B1220] text-slate-200 selection:bg-primary/30 selection:text-white flex">
-      <AppSidebar />
+      <AppSidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
       
       <div className="flex-1 flex flex-col min-h-screen">
-        <AppHeader />
+        <AppHeader isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
 
         {/* Main Content Area */}
         <main className={cn(
@@ -24,7 +26,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
           'md:pl-72'
         )}>
           <div className={cn(
-            'p-6 md:p-10 max-w-[1600px] mx-auto animate-fade-in-up'
+            'p-4 sm:p-6 md:p-10 max-w-[1600px] mx-auto animate-fade-in-up'
           )}>
             {children}
           </div>

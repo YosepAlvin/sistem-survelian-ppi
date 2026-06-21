@@ -16,13 +16,19 @@ import {
   Moon,
   Sun,
   Monitor,
-  Command
+  Command,
+  Menu
 } from 'lucide-react'
 
 import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
 
-const AppHeader: React.FC = () => {
+interface AppHeaderProps {
+  isMobileOpen: boolean
+  setIsMobileOpen: (open: boolean) => void
+}
+
+const AppHeader: React.FC<AppHeaderProps> = ({ isMobileOpen, setIsMobileOpen }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -86,7 +92,15 @@ const AppHeader: React.FC = () => {
           : 'bg-transparent border-b border-transparent'
       )}
     >
-      <div className="h-full px-6 md:px-10 flex items-center justify-between gap-8">
+      <div className="h-full px-4 md:px-6 md:px-10 flex items-center justify-between gap-4">
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <Menu size={20} />
+        </button>
+
         {/* Search Section */}
         <div className="flex-1 max-w-xl hidden lg:flex items-center group">
           <div className={cn(

@@ -151,13 +151,18 @@ export default function AntibiotikPage() {
 
     try {
       const data = await readExcelFile(file)
+      console.log("Data from Excel:", data)
       const res = await axios.post("/api/admin/antibiotik/import", data)
       
       if (res.data.errorCount > 0) {
+        const errorDetails = res.data.errors.map((err: any) => 
+          `Baris ${err.index + 2} (${err.item?.kode || 'Tidak ada kode'}): ${err.message}`
+        ).join('\n')
+        
         showToast({
           type: 'warning',
           title: 'Import Sebagian Berhasil',
-          message: `${res.data.processedCount} data berhasil diproses, ${res.data.errorCount} data gagal. Lihat console untuk detail error.`
+          message: `${res.data.processedCount} data berhasil diproses, ${res.data.errorCount} data gagal:\n${errorDetails}`
         })
         console.error("Import errors:", res.data.errors)
       } else {

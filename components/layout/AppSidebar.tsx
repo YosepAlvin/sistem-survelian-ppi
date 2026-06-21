@@ -36,6 +36,7 @@ interface MenuItemProps {
 
 interface MenuItemWithRoleProps extends MenuItemProps {
   roleColor?: string
+  onItemClick?: () => void
 }
 
 const MenuItem: React.FC<MenuItemWithRoleProps> = ({
@@ -46,7 +47,8 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
   isActive,
   isCollapsed,
   children,
-  roleColor = 'blue'
+  roleColor = 'blue',
+  onItemClick
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -68,7 +70,10 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
     return (
       <div className="space-y-1">
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            setIsExpanded(!isExpanded)
+            onItemClick?.()
+          }}
           className={cn(baseClasses, isActive && getActiveStyles(roleColor))}
         >
           <span className={cn("transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")}>
@@ -99,6 +104,7 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
                 {...child}
                 isCollapsed={isCollapsed}
                 roleColor={roleColor}
+                onItemClick={onItemClick}
               />
             ))}
           </div>
@@ -122,7 +128,10 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
   if (onClick) {
     return (
       <button
-        onClick={onClick}
+        onClick={() => {
+          onClick()
+          onItemClick?.()
+        }}
         className={cn(baseClasses, 'hover:bg-red-500/10 hover:text-red-400')}
       >
         {content}
@@ -131,7 +140,7 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
   }
 
   return (
-    <Link href={href || '#'}>
+    <Link href={href || '#'} onClick={onItemClick}>
       <span className={cn(baseClasses, isActive && getActiveStyles(roleColor))}>
         {content}
       </span>
@@ -139,9 +148,13 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
   )
 }
 
-const AppSidebar: React.FC = () => {
+interface AppSidebarProps {
+  isMobileOpen: boolean
+  setIsMobileOpen: (open: boolean) => void
+}
+
+const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -286,6 +299,10 @@ const AppSidebar: React.FC = () => {
     return baseItems
   }
 
+  const handleMenuItemClick = () => {
+    setIsMobileOpen(false)
+  }
+
   return (
     <>
       {isMobileOpen && (
@@ -317,7 +334,7 @@ const AppSidebar: React.FC = () => {
           <div className="space-y-1">
             {!isCollapsed && <p className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Main Navigation</p>}
             {getMenuItems().map((item, idx) => (
-              <MenuItem key={idx} {...item} isCollapsed={isCollapsed} roleColor={theme.color} />
+              <MenuItem key={idx} {...item} isCollapsed={isCollapsed} roleColor={theme.color} onItemClick={handleMenuItemClick} />
             ))}
           </div>
         </div>
