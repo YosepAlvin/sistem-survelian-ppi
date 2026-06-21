@@ -10,11 +10,12 @@ import { FormField, FormInput, FormSelect } from "@/components/ui/FormField"
 import { DataTable } from "@/components/ui/DataTable"
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
 import { EmptyState } from "@/components/ui/EmptyState"
-import { Plus, Eye, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Eye, Trash2, Edit2, Download, Upload } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import axios from "axios"
+import { readExcelFile, generateTemplate } from "@/lib/excel-import"
 
 type Ruangan = {
   id: string;
@@ -126,6 +127,40 @@ export default function RuanganPage() {
     }
   }
 
+  const handleDownloadTemplate = () => {
+    generateTemplate(
+      ['nama', 'kode', 'kategori'],
+      'template_ruangan'
+    )
+    showToast({
+      type: 'success',
+      title: 'Template Downloaded',
+      message: 'Template Excel untuk import telah diunduh.'
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await readExcelFile(file)
+      await axios.post("/api/admin/ruangan/import", data)
+      showToast({
+        type: 'success',
+        title: 'Import Berhasil',
+        message: `${data.length} data ruangan berhasil diimport.`
+      })
+      fetchRuangan()
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Gagal Import',
+        message: err.response?.data?.error || err.message
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -134,16 +169,44 @@ export default function RuanganPage() {
             title="Master Data Ruangan"
             description="Kelola data ruangan dan kategori unit pelayanan"
             actions={
-              <PrimaryButton
-                onClick={() => {
-                  setEditingRuangan(null)
-                  setFormData({ nama: '', kode: '', kategori: 'RANAP' })
-                  setShowForm(!showForm)
-                }}
-                icon={<Plus size={18} />}
-              >
-                {showForm ? "Batal" : "Tambah Ruangan"}
-              </PrimaryButton>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadTemplate}
+                  className="flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  Download Template
+                </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <span>
+                      <Upload size={16} />
+                      Import Excel
+                    </span>
+                  </Button>
+                </label>
+                <PrimaryButton
+                  onClick={() => {
+                    setEditingRuangan(null)
+                    setFormData({ nama: '', kode: '', kategori: 'RANAP' })
+                    setShowForm(!showForm)
+                  }}
+                  icon={<Plus size={18} />}
+                >
+                  {showForm ? "Batal" : "Tambah Ruangan"}
+                </PrimaryButton>
+              </div>
             }
           />
 

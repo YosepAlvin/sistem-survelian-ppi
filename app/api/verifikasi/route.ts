@@ -267,119 +267,203 @@ export async function PUT(req: Request) {
     let notifTitle: string = "";
     let notifMessage: string = "";
     let relatedRawatInapId: number | null = null;
+    let pasienIdForNotification: number | null = null;
 
-    if (entityType === 'SurveilansHarian') {
-      const existing = await db.surveilansHarian.findUnique({ 
-        where: { id: parseInt(id) },
-        include: { rawat_inap: { include: { pasien: true } } }
-      })
-      previousStatus = (existing as any)?.status
-      updated = await (db.surveilansHarian as any).update({
-        where: { id: parseInt(id) },
-        data: {
-          status: status, // VERIFIED, REVISI
-          catatan_revisi: status === 'REVISI' ? reason : undefined,
-          verified_by: userId,
-          verified_at: today,
-        },
-      })
-      relatedRawatInapId = (existing as any)?.rawat_inap_id;
-      if (status === 'VERIFIED') {
-        notifTitle = "Surveilans Harian Terverifikasi";
-        notifMessage = `Surveilans harian pasien ${(existing as any).rawat_inap.pasien.nama} telah diverifikasi.`;
-      } else if (status === 'REVISI') {
-        notifTitle = "Surveilans Harian Perlu Direvisi";
-        notifMessage = `Surveilans harian pasien ${(existing as any).rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
-      }
-    } else if (entityType === 'SurveilansIdo') {
-      const existing = await (db.surveilansIdo as any).findUnique({ 
-        where: { id: parseInt(id) },
-        include: { operasi: { include: { rawat_inap: { include: { pasien: true } } } } }
-      })
-      previousStatus = existing?.status_verifikasi
-      relatedRawatInapId = existing?.operasi.rawat_inap_id;
-
-      const updateData: any = {}
-
-      if (action === 'VERIFY') {
-        updateData.status_verifikasi = 'VERIFIED'
-        updateData.verified_by = userId
-        updateData.verified_at = today
-        notifTitle = "Laporan IDO Terverifikasi";
-        notifMessage = `Laporan IDO pasien ${existing.operasi.rawat_inap.pasien.nama} telah diverifikasi.`;
-      } else if (action === 'REJECT') {
-        updateData.status_verifikasi = 'REJECTED'
-        updateData.verified_by = userId
-        updateData.verified_at = today
-        notifTitle = "Laporan IDO Perlu Direvisi";
-        notifMessage = `Laporan IDO pasien ${existing.operasi.rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
-      } else if (action === 'CLOSE_CASE') {
-        updateData.status = 'SELESAI'
-        updateData.tanggal_selesai = today
-        updateData.updated_by = userId
-        notifTitle = "Kasus IDO Ditutup";
-        notifMessage = `Kasus IDO pasien ${existing.operasi.rawat_inap.pasien.nama} telah ditutup (sembuh).`;
-        
-        // Also create audit trail for CLOSE_CASE
-        const auditEntry = buildAuditTrailEntry({
-          action: 'CLOSE_CASE',
-          moduleName: 'verifikasi',
-          userId: userId,
-          userName: userName,
-          entityType: 'SurveilansIdo',
-          entityId: parseInt(id),
-          field: 'status',
-          previousValue: existing.status,
-          newValue: 'SELESAI',
-          ipAddress: null,
-          timestamp: today,
+    // Wrap everything in a transaction!
+    updated = await db.$transaction(async (tx) => {
+      if (entityType === 'SurveilansHarian') {
+        const existing = await tx.surveilansHarian.findUnique({ 
+          where: { id: parseInt(id) },
+          include: { rawat_inap: { include: { pasien: true } } }
         })
-        await db.auditTrail.create({ data: auditEntry })
-      }
-
-      updated = await (db.surveilansIdo as any).update({
-        where: { id: parseInt(id) },
-        data: updateData,
-      })
-    } else {
-      const existing = await db.kejadianInfeksi.findUnique({ 
-        where: { id: parseInt(id) },
-        include: { 
-          rawat_inap: { include: { pasien: true } }
+        previousStatus = (existing as any)?.status
+        const updateResult = await (tx.surveilansHarian as any).update({
+          where: { id: parseInt(id) },
+          data: {
+            status: status, // VERIFIED, REVISI
+            catatan_revisi: status === 'REVISI' ? reason : undefined,
+            verified_by: userId,
+            verified_at: today,
+          },
+        })
+        relatedRawatInapId = (existing as any)?.rawat_inap_id;
+        pasienIdForNotification = (existing as any)?.rawat_inap?.pasien_id ?? null;
+        if (status === 'VERIFIED') {
+          notifTitle = "Surveilans Harian Terverifikasi";
+          notifMessage = `Surveilans harian pasien ${(existing as any).rawat_inap.pasien.nama} telah diverifikasi.`;
+        } else if (status === 'REVISI') {
+          notifTitle = "Surveilans Harian Perlu Direvisi";
+          notifMessage = `Surveilans harian pasien ${(existing as any).rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
         }
-      })
-      previousStatus = (existing as any)?.status_verifikasi
-      relatedRawatInapId = (existing as any)?.rawat_inap_id;
-      
-      const updateData: any = {}
+        return updateResult;
+      } else if (entityType === 'SurveilansIdo') {
+        const existing = await (tx.surveilansIdo as any).findUnique({ 
+          where: { id: parseInt(id) },
+          include: { operasi: { include: { rawat_inap: { include: { pasien: true } } } } }
+        })
+        previousStatus = existing?.status_verifikasi
+        relatedRawatInapId = existing?.operasi.rawat_inap_id;
+        pasienIdForNotification = existing?.operasi.rawat_inap?.pasien_id ?? null;
 
-      if (action === 'VERIFY') {
-        updateData.status_verifikasi = 'VERIFIED'
-        updateData.verified_by = userId
-        updateData.verified_at = today
-        notifTitle = "Laporan Infeksi Terverifikasi";
-        notifMessage = `Laporan infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} telah diverifikasi.`;
-      } else if (action === 'REJECT') {
-        updateData.status_verifikasi = 'REJECTED'
-        updateData.catatan_revisi = reason
-        updateData.verified_by = userId
-        updateData.verified_at = today
-        notifTitle = "Laporan Infeksi Perlu Direvisi";
-        notifMessage = `Laporan infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
-      } else if (action === 'CLOSE_CASE') {
-        updateData.status = 'SELESAI'
-        updateData.tanggal_selesai = today
-        updateData.updated_by = userId
-        updateData.updated_at = today
-        notifTitle = "Kasus Infeksi Ditutup";
-        notifMessage = `Kasus infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} telah ditutup (sembuh).`;
+        const updateData: any = {}
+
+        if (action === 'VERIFY') {
+          updateData.status_verifikasi = 'VERIFIED'
+          updateData.verified_by = userId
+          updateData.verified_at = today
+          notifTitle = "Laporan IDO Terverifikasi";
+          notifMessage = `Laporan IDO pasien ${existing.operasi.rawat_inap.pasien.nama} telah diverifikasi.`;
+        } else if (action === 'REJECT') {
+          updateData.status_verifikasi = 'REJECTED'
+          updateData.verified_by = userId
+          updateData.verified_at = today
+          notifTitle = "Laporan IDO Perlu Direvisi";
+          notifMessage = `Laporan IDO pasien ${existing.operasi.rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
+        } else if (action === 'CLOSE_CASE') {
+          updateData.status = 'SELESAI'
+          updateData.tanggal_selesai = today
+          updateData.updated_by = userId
+          notifTitle = "Kasus IDO Ditutup";
+          notifMessage = `Kasus IDO pasien ${existing.operasi.rawat_inap.pasien.nama} telah ditutup (sembuh).`;
+          
+          // Also create audit trail for CLOSE_CASE
+          const auditEntry = buildAuditTrailEntry({
+            action: 'CLOSE_CASE',
+            moduleName: 'verifikasi',
+            userId: userId,
+            userName: userName,
+            entityType: 'SurveilansIdo',
+            entityId: parseInt(id),
+            field: 'status',
+            previousValue: existing.status,
+            newValue: 'SELESAI',
+            ipAddress: null,
+            timestamp: today,
+          })
+          await tx.auditTrail.create({ data: auditEntry })
+
+          // Mark any pending closure notifications as read!
+          await tx.notification.updateMany({
+            where: {
+              relatedEntityType: 'SurveilansIdo',
+              relatedEntityId: parseInt(id),
+              isRead: false,
+              type: {in: ['INFECTION_PENDING_CLOSURE']}
+            },
+            data: {
+              isRead: true,
+              readAt: today
+            }
+          })
+        }
+
+        if (action === 'VERIFY' || action === 'REJECT') {
+          // Mark pending verification notifications as read!
+          await tx.notification.updateMany({
+            where: {
+              relatedEntityType: 'SurveilansIdo',
+              relatedEntityId: parseInt(id),
+              isRead: false,
+              type: {in: ['PENDING_VERIFICATION']}
+            },
+            data: {
+              isRead: true,
+              readAt: today
+            }
+          })
+        }
+
+        const updateResult = await (tx.surveilansIdo as any).update({
+          where: { id: parseInt(id) },
+          data: updateData,
+        })
+
+        return updateResult;
+      } else {
+        const existing = await tx.kejadianInfeksi.findUnique({ 
+          where: { id: parseInt(id) },
+          include: { 
+            rawat_inap: { include: { pasien: true } }
+          }
+        })
+        previousStatus = (existing as any)?.status_verifikasi
+        relatedRawatInapId = (existing as any)?.rawat_inap_id;
+        pasienIdForNotification = (existing as any)?.rawat_inap?.pasien_id ?? null;
+        
+        const updateData: any = {}
+
+        if (action === 'VERIFY') {
+          updateData.status_verifikasi = 'VERIFIED'
+          updateData.verified_by = userId
+          updateData.verified_at = today
+          notifTitle = "Laporan Infeksi Terverifikasi";
+          notifMessage = `Laporan infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} telah diverifikasi.`;
+
+          // Mark pending verification notification as read!
+          await tx.notification.updateMany({
+            where: {
+              relatedEntityType: 'KejadianInfeksi',
+              relatedEntityId: parseInt(id),
+              isRead: false,
+              type: 'PENDING_VERIFICATION'
+            },
+            data: {
+              isRead: true,
+              readAt: today
+            }
+          })
+        } else if (action === 'REJECT') {
+          updateData.status_verifikasi = 'REJECTED'
+          updateData.catatan_revisi = reason
+          updateData.verified_by = userId
+          updateData.verified_at = today
+          notifTitle = "Laporan Infeksi Perlu Direvisi";
+          notifMessage = `Laporan infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} perlu direvisi: ${reason}`;
+
+          // Mark pending verification notification as read!
+          await tx.notification.updateMany({
+            where: {
+              relatedEntityType: 'KejadianInfeksi',
+              relatedEntityId: parseInt(id),
+              isRead: false,
+              type: 'PENDING_VERIFICATION'
+            },
+            data: {
+              isRead: true,
+              readAt: today
+            }
+          })
+        } else if (action === 'CLOSE_CASE') {
+          updateData.status = 'SELESAI'
+          updateData.tanggal_selesai = today
+          updateData.updated_by = userId
+          updateData.updated_at = today
+          notifTitle = "Kasus Infeksi Ditutup";
+          notifMessage = `Kasus infeksi ${(existing as any).jenis_infeksi} pasien ${(existing as any).rawat_inap.pasien.nama} telah ditutup (sembuh).`;
+
+          // Mark any pending closure notifications as read!
+          await tx.notification.updateMany({
+            where: {
+              relatedEntityType: 'KejadianInfeksi',
+              relatedEntityId: parseInt(id),
+              isRead: false,
+              type: {in: ['INFECTION_PENDING_CLOSURE']}
+            },
+            data: {
+              isRead: true,
+              readAt: today
+            }
+          })
+        }
+
+        const updateResult = await (tx.kejadianInfeksi as any).update({
+          where: { id: parseInt(id) },
+          data: updateData,
+        })
+
+        return updateResult;
       }
-
-      updated = await (db.kejadianInfeksi as any).update({
-        where: { id: parseInt(id) },
-        data: updateData,
-      })
-    }
+    })
 
     const actionType = action === 'CLOSE_CASE' ? 'CLOSE_CASE' : (action === 'VERIFY' ? 'VERIFY_EVENT' : 'REJECT_EVENT')
     const entry = buildAuditTrailEntry({
@@ -396,12 +480,15 @@ export async function PUT(req: Request) {
       timestamp: today,
     })
 
-    await db.auditTrail.create({ 
-      data: { 
-        ...entry,
-        timestamp: entry.timestamp 
-      } 
-    })
+    // Create audit trail if not already created for CLOSE_CASE (we did it inside transaction for SurveilansIdo)
+    if (!(entityType === 'SurveilansIdo' && action === 'CLOSE_CASE')) {
+      await db.auditTrail.create({ 
+        data: { 
+          ...entry,
+          timestamp: entry.timestamp 
+        } 
+      })
+    }
 
     if (notifTitle && notifMessage) {
       await (db.notification as any).create({
@@ -413,10 +500,7 @@ export async function PUT(req: Request) {
           relatedEntityType: entityType,
           relatedEntityId: updated?.id,
           kejadianInfeksiId: entityType === 'KejadianInfeksi' ? updated?.id : null,
-          pasienId: relatedRawatInapId ? (await db.rawatInap.findUnique({
-            where: { id: relatedRawatInapId },
-            select: { pasien_id: true }
-          }))?.pasien_id : null,
+          pasienId: pasienIdForNotification,
           createdBy: userId
         }
       })

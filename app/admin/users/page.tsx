@@ -7,11 +7,13 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton"
 import { SecondaryButton } from "@/components/ui/SecondaryButton"
 import { FormField, FormInput, FormSelect } from "@/components/ui/FormField"
 import { DataTable } from "@/components/ui/DataTable"
-import { Plus, Eye, ToggleRight, Loader2, Edit2 } from 'lucide-react'
+import { Plus, Eye, ToggleRight, Loader2, Edit2, Download, Upload } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 import useSWR from 'swr'
 import axios from 'axios'
 import { fetcher } from '@/lib/fetcher'
+import { readExcelFile, generateTemplate } from "@/lib/excel-import"
+import { Button } from '@/components/ui/button'
 
 type User = {
   id: string;
@@ -116,6 +118,40 @@ export default function UsersPage() {
     setShowForm(true)
   }
 
+  const handleDownloadTemplate = () => {
+    generateTemplate(
+      ['nama', 'email', 'role', 'ruanganId', 'password'],
+      'template_users'
+    )
+    showToast({
+      type: 'success',
+      title: 'Template Downloaded',
+      message: 'Template Excel untuk import telah diunduh.'
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await readExcelFile(file)
+      await axios.post("/api/admin/users/import", data)
+      showToast({
+        type: 'success',
+        title: 'Import Berhasil',
+        message: `${data.length} data user berhasil diimport.`
+      })
+      mutateUsers()
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Gagal Import',
+        message: err.response?.data?.error || err.message
+      })
+    }
+  }
+
   if (usersError) return <div className="p-8 text-center text-red-500">Gagal memuat data user</div>
   if (!users) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto" /></div>
 
@@ -125,16 +161,44 @@ export default function UsersPage() {
         title="Manajemen User"
         description="Kelola akun pengguna, role, dan hak akses sistem"
         actions={
-          <PrimaryButton
-            onClick={() => {
-              setEditingUser(null)
-              setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
-              setShowForm(!showForm)
-            }}
-            icon={<Plus size={18} />}
-          >
-            {showForm ? "Batal" : "Tambah User"}
-          </PrimaryButton>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2"
+            >
+              <Download size={16} />
+              Download Template
+            </Button>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                asChild
+              >
+                <span>
+                  <Upload size={16} />
+                  Import Excel
+                </span>
+              </Button>
+            </label>
+            <PrimaryButton
+              onClick={() => {
+                setEditingUser(null)
+                setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
+                setShowForm(!showForm)
+              }}
+              icon={<Plus size={18} />}
+            >
+              {showForm ? "Batal" : "Tambah User"}
+            </PrimaryButton>
+          </div>
         }
       />
 

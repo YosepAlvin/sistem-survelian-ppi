@@ -10,9 +10,10 @@ import { DataTable } from "@/components/ui/DataTable"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
-import { Plus, Eye, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Eye, Trash2, Edit2, Download, Upload } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import axios from "axios"
+import { readExcelFile, generateTemplate } from "@/lib/excel-import"
 
 type Dokter = {
   id: string;
@@ -122,6 +123,40 @@ export default function DokterPage() {
     }
   }
 
+  const handleDownloadTemplate = () => {
+    generateTemplate(
+      ['nama', 'spesialisasi'],
+      'template_dokter'
+    )
+    showToast({
+      type: 'success',
+      title: 'Template Downloaded',
+      message: 'Template Excel untuk import telah diunduh.'
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await readExcelFile(file)
+      await axios.post("/api/admin/dokter/import", data)
+      showToast({
+        type: 'success',
+        title: 'Import Berhasil',
+        message: `${data.length} data dokter berhasil diimport.`
+      })
+      fetchDokter()
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Gagal Import',
+        message: err.response?.data?.error || err.message
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -130,16 +165,44 @@ export default function DokterPage() {
             title="Manajemen Dokter"
             description="Kelola data dokter, spesialisasi, dan status ketersediaan"
             actions={
-              <PrimaryButton
-                onClick={() => {
-                  setEditingDokter(null)
-                  setFormData({ nama: '', spesialisasi: '' })
-                  setShowForm(!showForm)
-                }}
-                icon={<Plus size={18} />}
-              >
-                {showForm ? "Batal" : "Tambah Dokter"}
-              </PrimaryButton>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadTemplate}
+                  className="flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  Download Template
+                </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <span>
+                      <Upload size={16} />
+                      Import Excel
+                    </span>
+                  </Button>
+                </label>
+                <PrimaryButton
+                  onClick={() => {
+                    setEditingDokter(null)
+                    setFormData({ nama: '', spesialisasi: '' })
+                    setShowForm(!showForm)
+                  }}
+                  icon={<Plus size={18} />}
+                >
+                  {showForm ? "Batal" : "Tambah Dokter"}
+                </PrimaryButton>
+              </div>
             }
           />
 

@@ -40,7 +40,8 @@ export async function GET() {
         ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
-        ab.efek_samping
+        ab.efek_samping,
+        ab.tanggal_review
       )
 
       return {
@@ -53,8 +54,8 @@ export async function GET() {
         dosis: ab.dosis || "-",
         rute: ab.rute || "-",
         tgl_mulai: ab.tanggal_mulai.toISOString().split("T")[0],
-        tgl_selesai: ab.tanggal_selesai
-          ? ab.tanggal_selesai.toISOString().split("T")[0]
+        tgl_selesai: ab.tanggal_selesai_aktual
+          ? ab.tanggal_selesai_aktual.toISOString().split("T")[0]
           : "-",
         ke: ab.antibiotik_ke || 1,
         hari_ke,
@@ -142,7 +143,7 @@ export async function POST(req: Request) {
           rawat_inap_id: rawatInap.id,
           antibiotik_id: abMaster.id,
           tanggal_mulai: new Date(data.tgl_mulai),
-          tanggal_selesai:
+          tanggal_rencana_selesai:
             data.tgl_selesai && data.tgl_selesai !== "-"
               ? new Date(data.tgl_selesai)
               : null,
@@ -208,7 +209,10 @@ export async function PUT(req: Request) {
     // ── Load existing record BEFORE update (for audit previous value) ────────
     const existing = await db.penggunaanAntibiotik.findUnique({
       where: { id: recordId },
-      include: { antibiotik: true },
+      include: { 
+        antibiotik: true,
+        rawat_inap: { include: { pasien: true } }
+      },
     })
     if (!existing) {
       return NextResponse.json({ error: "Record not found" }, { status: 404 })
@@ -218,13 +222,13 @@ export async function PUT(req: Request) {
     const updateData: any = {}
 
     if (isMarkComplete) {
-      updateData.tanggal_selesai = new Date()
+      updateData.tanggal_selesai_aktual = new Date()
     } else {
       if (data.tgl_mulai) updateData.tanggal_mulai = new Date(data.tgl_mulai)
       if (data.tgl_selesai && data.tgl_selesai !== "-") {
-        updateData.tanggal_selesai = new Date(data.tgl_selesai)
+        updateData.tanggal_rencana_selesai = new Date(data.tgl_selesai)
       } else if (data.tgl_selesai === "-") {
-        updateData.tanggal_selesai = null
+        updateData.tanggal_rencana_selesai = null
       }
       if (data.dosis) updateData.dosis = data.dosis
       if (data.rute) updateData.rute = data.rute
@@ -233,12 +237,27 @@ export async function PUT(req: Request) {
       if (data.catatan_ipcn !== undefined) updateData.catatan_ipcn = data.catatan_ipcn
       if (data.rekomendasi_ipcn !== undefined) updateData.rekomendasi_ipcn = data.rekomendasi_ipcn
       if (isReview) {
-        if (role !== "IPCN" && role !== "ADMIN") {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        }
-        updateData.tanggal_review = new Date()
-        updateData.reviewed_by_id = Number((session.user as any).id)
+      if (role !== "IPCN" && role !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
+      updateData.tanggal_review = new Date()
+      updateData.reviewed_by_id = Number((session.user as any).id)
+      
+      // Create notification for IPCLN
+      await db.notification.create({
+        data: {
+          type: "ANTIBIOTIK_DIREVIEW",
+          category: "antibiotik",
+          title: "✅ Review Antibiotik Baru",
+          message: `${existing.antibiotik?.nama} pasien ${existing.rawat_inap?.pasien?.nama} telah direview oleh IPCN.`,
+          relatedEntityType: "PenggunaanAntibiotik",
+          relatedEntityId: existing.id,
+          pasienId: existing.rawat_inap?.pasien_id,
+          createdBy: Number((session.user as any).id),
+          isRead: false,
+        }
+      })
+    }
       if (data.nama_ab) {
         const abMaster = await db.antibiotik.upsert({
           where: { kode: data.nama_ab.toUpperCase() },
@@ -249,9 +268,46 @@ export async function PUT(req: Request) {
       }
     }
 
-    const updated = await db.penggunaanAntibiotik.update({
-      where: { id: recordId },
-      data: updateData,
+    const updated = await db.$transaction(async (tx) => {
+      // Update the record
+      const record = await tx.penggunaanAntibiotik.update({
+        where: { id: recordId },
+        data: updateData,
+      })
+
+      // Manage notifications based on new state
+      if (isMarkComplete) {
+        // Mark all related notifications as read or delete them
+        await tx.notification.updateMany({
+          where: {
+            relatedEntityType: "PenggunaanAntibiotik",
+            relatedEntityId: recordId,
+            isRead: false,
+          },
+          data: {
+            isRead: true,
+            readAt: new Date(),
+          },
+        })
+      }
+
+      if (isReview) {
+        // Mark any "PERLU_REVIEW" type notifications as read
+        await tx.notification.updateMany({
+          where: {
+            relatedEntityType: "PenggunaanAntibiotik",
+            relatedEntityId: recordId,
+            type: { in: ["ANTIBIOTIK_PERLU_REVIEW", "ANTIBIOTIK_OVERDUE"] },
+            isRead: false,
+          },
+          data: {
+            isRead: true,
+            readAt: new Date(),
+          },
+        })
+      }
+
+      return record
     })
 
     // ── Build audit trail with meaningful before/after values ────────────────
@@ -304,8 +360,8 @@ export async function PUT(req: Request) {
         }
       }
       if (data.tgl_selesai !== undefined) {
-        const prevTglSelesai = (existing as any).tanggal_selesai
-          ? new Date((existing as any).tanggal_selesai).toISOString().split("T")[0]
+        const prevTglSelesai = (existing as any).tanggal_rencana_selesai
+          ? new Date((existing as any).tanggal_rencana_selesai).toISOString().split("T")[0]
           : null
         if (data.tgl_selesai !== prevTglSelesai) {
           prevSnapshot.tgl_selesai = prevTglSelesai
@@ -374,7 +430,19 @@ export async function DELETE(req: Request) {
       include: { antibiotik: true, rawat_inap: { include: { pasien: true } } },
     })
 
-    await db.penggunaanAntibiotik.delete({ where: { id: parseInt(id) } })
+    await db.$transaction(async (tx) => {
+      // First delete all related notifications
+      await tx.notification.deleteMany({
+        where: {
+          relatedEntityType: "PenggunaanAntibiotik",
+          relatedEntityId: parseInt(id),
+        },
+      })
+      // Then delete the record
+      await tx.penggunaanAntibiotik.delete({
+        where: { id: parseInt(id) },
+      })
+    })
 
     // Audit trail — DELETE
     if (existing) {

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
@@ -13,6 +13,7 @@ import axios from "axios"
 import { exportMultiSheetExcel } from "@/lib/excel-export"
 import { STATUS_TOOLTIP } from "@/lib/antibiotik-status"
 import { useSession } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,9 +81,10 @@ type AuditEntry = {
   timestamp: string;
 }
 
-export default function AntibiotikPage() {
+function AntibiotikPageContent() {
   const { showToast } = useToast()
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
   const [dataList, setDataList] = useState<AntibiotikData[]>([])
   const [pasienList, setPasienList] = useState<PasienData[]>([])
   const [masterAntibiotik, setMasterAntibiotik] = useState<MasterAntibiotik[]>([])
@@ -169,6 +171,13 @@ export default function AntibiotikPage() {
     }
   }, [])
 
+  // Reset tab state when modal closes or a different record is selected
+  const openDetailModal = useCallback((ab: AntibiotikData) => {
+    setSelectedAB(ab)
+    setDetailTab('detail')
+    setAuditData([])
+  }, [])
+
   useEffect(() => {
     fetchData()
   }, [fetchData])
@@ -176,6 +185,16 @@ export default function AntibiotikPage() {
   useEffect(() => {
     fetchAnalytics()
   }, [fetchAnalytics])
+
+  useEffect(() => {
+    const abId = searchParams.get('abId');
+    if (abId && dataList.length > 0 && !selectedAB) {
+      const found = dataList.find(ab => ab.id === abId);
+      if (found) {
+        openDetailModal(found);
+      }
+    }
+  }, [searchParams, dataList, selectedAB, openDetailModal])
 
   // Fetch audit trail when "Riwayat Aktivitas" tab is selected
   const fetchAudit = useCallback(async (id: string) => {
@@ -189,13 +208,6 @@ export default function AntibiotikPage() {
     } finally {
       setAuditLoading(false)
     }
-  }, [])
-
-  // Reset tab state when modal closes or a different record is selected
-  const openDetailModal = useCallback((ab: AntibiotikData) => {
-    setSelectedAB(ab)
-    setDetailTab('detail')
-    setAuditData([])
   }, [])
 
   const closeDetailModal = useCallback(() => {
@@ -382,6 +394,8 @@ export default function AntibiotikPage() {
         return 'bg-red-900/30 text-red-400 border border-red-800/50'
       case 'PERLU_REVIEW':
         return 'bg-purple-900/30 text-purple-400 border border-purple-800/50'
+      case 'SUDAH_DIREVIEW':
+        return 'bg-blue-900/30 text-blue-400 border border-blue-800/50'
       default:
         return 'bg-gray-800 text-gray-400 border border-gray-700/50'
     }
@@ -450,7 +464,8 @@ export default function AntibiotikPage() {
           {row.status === 'AKTIF' ? 'Aktif' : 
            row.status === 'AKAN_SELESAI' ? 'Akan Selesai' :
            row.status === 'SELESAI' ? 'Selesai' :
-           row.status === 'OVERDUE' ? 'Overdue' : 'Perlu Review'}
+           row.status === 'OVERDUE' ? 'Overdue' : 
+           row.status === 'SUDAH_DIREVIEW' ? 'Sudah Direview' : 'Perlu Review'}
         </span>
       ),
     },
@@ -767,14 +782,15 @@ export default function AntibiotikPage() {
                       <div>
                         <h4 className="text-sm font-semibold text-gray-400 mb-1">Status</h4>
                         <span
-                          title={STATUS_TOOLTIP[selectedAB.status as keyof typeof STATUS_TOOLTIP] || ''}
-                          className={`px-2 py-1 rounded-full text-xs font-semibold cursor-default ${getStatusBadgeColor(selectedAB.status)}`}
-                        >
-                          {selectedAB.status === 'AKTIF' ? 'Aktif' :
-                           selectedAB.status === 'AKAN_SELESAI' ? 'Akan Selesai' :
-                           selectedAB.status === 'SELESAI' ? 'Selesai' :
-                           selectedAB.status === 'OVERDUE' ? 'Overdue' : 'Perlu Review'}
-                        </span>
+          title={STATUS_TOOLTIP[selectedAB.status as keyof typeof STATUS_TOOLTIP] || ''}
+          className={`px-2 py-1 rounded-full text-xs font-semibold cursor-default ${getStatusBadgeColor(selectedAB.status)}`}
+        >
+          {selectedAB.status === 'AKTIF' ? 'Aktif' :
+           selectedAB.status === 'AKAN_SELESAI' ? 'Akan Selesai' :
+           selectedAB.status === 'SELESAI' ? 'Selesai' :
+           selectedAB.status === 'OVERDUE' ? 'Overdue' : 
+           selectedAB.status === 'SUDAH_DIREVIEW' ? 'Sudah Direview' : 'Perlu Review'}
+        </span>
                       </div>
                     </div>
                   </div>
@@ -1085,8 +1101,8 @@ export default function AntibiotikPage() {
                 <FormInput 
                   type="number"
                   placeholder="1 / 2 / 3" 
-                  value={formData.ke}
-                  onChange={e => setFormData({...formData, ke: parseInt(e.target.value)})}
+                  value={formData.ke || ''}
+                  onChange={e => setFormData({...formData, ke: e.target.value ? parseInt(e.target.value) : 1})}
                   required
                 />
               </FormField>
@@ -1152,5 +1168,13 @@ export default function AntibiotikPage() {
         isDestructive={true}
       />
     </>
+  )
+}
+
+export default function AntibiotikPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <AntibiotikPageContent />
+    </Suspense>
   )
 }

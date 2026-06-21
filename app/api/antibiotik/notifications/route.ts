@@ -33,6 +33,7 @@ export async function POST(req: Request) {
 
     let created = 0
     let skipped = 0
+    let deleted = 0
 
     for (const ab of activeRecords) {
       const { status } = calcAntibiotikStatus(
@@ -41,7 +42,8 @@ export async function POST(req: Request) {
         ab.tanggal_selesai_aktual,
         (ab.antibiotik as any).is_restriksi,
         (ab.antibiotik as any).durasi_maks_hari,
-        ab.efek_samping
+        ab.efek_samping,
+        (ab as any).tanggal_review
       )
 
       const pasienNama = ab.rawat_inap.pasien.nama
@@ -74,6 +76,18 @@ export async function POST(req: Request) {
         })
       }
 
+      // First, delete any stale notifications for this record (types not in candidates)
+      const deleteResult = await db.notification.deleteMany({
+        where: {
+          relatedEntityType: "PenggunaanAntibiotik",
+          relatedEntityId: ab.id,
+          type: { notIn: candidates.map(c => c.type) },
+          isRead: false,
+        },
+      })
+      deleted += deleteResult.count
+
+      // Then, add new notifications if not already present
       for (const candidate of candidates) {
         // Deduplication: skip if unread notification of same type already exists for this record
         const existing = await db.notification.findFirst({
@@ -109,9 +123,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Notifikasi dibuat: ${created}, dilewati (duplikat): ${skipped}`,
+      message: `Notifikasi dibuat: ${created}, dilewati (duplikat): ${skipped}, dihapus (stale): ${deleted}`,
       created,
       skipped,
+      deleted,
     })
   } catch (error: any) {
     console.error("Error generate antibiotik notifications:", error)
@@ -154,6 +169,7 @@ export async function GET(req: Request) {
       isRead: n.isRead,
       createdAt: n.createdAt?.toISOString(),
       relatedEntityId: n.relatedEntityId,
+      relatedEntityType: n.relatedEntityType,
       pasien: n.pasien ? { nama: n.pasien.nama, no_rm: n.pasien.no_rm } : null,
     }))
 

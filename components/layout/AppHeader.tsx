@@ -153,7 +153,11 @@ const AppHeader: React.FC = () => {
                           className="w-full text-left rounded-2xl px-3 py-3 hover:bg-white/5 transition-colors border border-transparent hover:border-white/5"
                           onClick={() => { 
                             setIsNotificationsOpen(false); 
-                            router.push('/notifications') 
+                            if (notif.relatedEntityType === 'PenggunaanAntibiotik') {
+                              router.push(`/ipcln/antibiotik?abId=${notif.relatedEntityId}`);
+                            } else {
+                              router.push('/notifications');
+                            }
                           }}
                         >
                           <p className="text-sm text-white font-semibold line-clamp-1">{notif.title}</p>

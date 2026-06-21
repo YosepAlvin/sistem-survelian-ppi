@@ -27,7 +27,7 @@ Berdasarkan analisis seluruh dokumen:
 | HAP | infeksi_hap | Hospital Acquired Pneumonia |
 | VAP | infeksi_vap | Ventilator Associated Pneumonia |
 | IADP | infeksi_iadp | Infeksi Aliran Darah Primer |
-| TIRAH BARING | tirah_baring | Status tirah baring |
+| TIRAH BARING | tirah_barin | Status tirah baring |
 | DEKUBITUS | ada_dekubitus | Kejadian dekubitus |
 | SPUTUM | kultur_sputum | Hasil kultur sputum |
 | DARAH | kultur_darah | Hasil kultur darah |
@@ -76,7 +76,7 @@ Berdasarkan analisis seluruh dokumen:
 
 ## 2. ERD LENGKAP
 
-Lihat file `schema.prisma` untuk definisi lengkap.
+Lihat file `prisma/schema.prisma` untuk definisi lengkap.
 
 ### Ringkasan Relasi Antar Tabel:
 ```
@@ -96,11 +96,34 @@ rawat_inap ──< kejadian_infeksi ─┬─ phlebitis
 rawat_inap ──< hasil_kultur
 rawat_inap ──< penggunaan_antibiotik >── antibiotik
 ruangan ──< surveilans_bulanan
+audit_trail ──< users
+notifications ──< users
 ```
 
 ---
 
-## 3. LOGIKA DEVICE DAY (OTOMATIS)
+## 3. LANDING PAGE ENTERPRISE-GRADE
+
+Fitur-fitur landing page yang baru:
+- **Navbar Sticky**: Transparan dengan blur effect
+- **Hero Section 2 Kolom**: Judul besar, deskripsi sistem, tombol masuk
+- **Visual Gedung RS**: Gambar RS Budi Rahayu asli
+- **Live Statistics**: Menggunakan `getSystemStats()` untuk menampilkan real-time data
+- **Aktivitas Terbaru**: Data dari Audit Trail
+- **Modul Sistem**: 6 modul dengan icon dan deskripsi
+- **Status Sistem**: Menampilkan status database, sinkronisasi, modul, dll.
+- **Footer**: Informasi sistem dan RS
+
+### Desain:
+- Tema **Dark Blue Enterprise**
+- **Glassmorphism** untuk cards
+- **Gradient Background**
+- **Fully Responsive** (Mobile First)
+- **Tidak ada horizontal scroll**
+
+---
+
+## 4. LOGIKA DEVICE DAY (OTOMATIS)
 
 Device day dihitung server-side setiap kali data disimpan atau diupdate.
 
@@ -139,134 +162,166 @@ await prisma.alatTerpasang.updateMany({
 
 ---
 
-## 4. STRUKTUR FOLDER NEXT.JS 15
+## 5. STRUKTUR FOLDER NEXT.JS 15
 
 ```
-ppi-surveillance/
+sistem ppi rumah sakit budi rahayu/
 ├── app/
-│   ├── (auth)/
-│   │   └── login/
-│   │       └── page.tsx
-│   ├── (dashboard)/
-│   │   ├── layout.tsx                    # Layout dengan sidebar
-│   │   ├── admin/
-│   │   │   ├── users/
-│   │   │   │   ├── page.tsx              # Daftar user
-│   │   │   │   ├── [id]/page.tsx
-│   │   │   │   └── new/page.tsx
-│   │   │   ├── ruangan/page.tsx
-│   │   │   ├── dokter/page.tsx
-│   │   │   ├── diagnosa/page.tsx
-│   │   │   └── antibiotik/page.tsx
-│   │   ├── ipcln/
-│   │   │   ├── pasien/
-│   │   │   │   ├── page.tsx              # Daftar pasien aktif
-│   │   │   │   ├── new/page.tsx          # Tambah pasien baru
-│   │   │   │   └── [id]/
-│   │   │   │       ├── page.tsx
-│   │   │   │       └── rawat-inap/page.tsx
-│   │   │   ├── surveilans-harian/
-│   │   │   │   ├── page.tsx              # Pilih pasien & tanggal
-│   │   │   │   └── [rawatInapId]/page.tsx # Form input harian
-│   │   │   ├── surveilans-bulanan/
-│   │   │   │   └── page.tsx
-│   │   │   ├── operasi/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── [id]/ido/page.tsx     # Form IDO
-│   │   │   ├── infeksi/
-│   │   │   │   ├── phlebitis/page.tsx
-│   │   │   │   ├── isk/page.tsx
-│   │   │   │   ├── hap/page.tsx
-│   │   │   │   ├── vap/page.tsx
-│   │   │   │   ├── iadp/page.tsx
-│   │   │   │   └── dekubitus/page.tsx
-│   │   │   └── antibiotik/page.tsx
-│   │   └── ipcn/
-│   │       ├── dashboard/page.tsx        # Dashboard utama RS
-│   │       ├── dashboard/[ruanganId]/page.tsx
-│   │       ├── monitoring/
-│   │       │   ├── pasien-aktif/page.tsx
-│   │       │   ├── device-day/page.tsx
-│   │       │   ├── kejadian-infeksi/page.tsx
-│   │       │   └── kepatuhan/page.tsx
-│   │       ├── grafik/
-│   │       │   ├── bulanan/page.tsx
-│   │       │   └── tahunan/page.tsx
-│   │       ├── verifikasi/
-│   │       │   └── [id]/page.tsx
-│   │       └── laporan/
-│   │           ├── harian/page.tsx
-│   │           ├── bulanan/page.tsx
-│   │           ├── ido/page.tsx
-│   │           └── phlebitis/page.tsx
+│   ├── admin/
+│   │   ├── dashboard/page.tsx
+│   │   ├── users/page.tsx
+│   │   ├── ruangan/page.tsx
+│   │   ├── dokter/page.tsx
+│   │   ├── diagnosa/page.tsx
+│   │   ├── antibiotik/page.tsx
+│   │   ├── pasien/page.tsx
+│   │   ├── alat-kesehatan/page.tsx
+│   │   ├── settings/page.tsx
+│   │   └── layout.tsx
+│   ├── ipcln/
+│   │   ├── dashboard/page.tsx
+│   │   ├── pasien/page.tsx
+│   │   ├── surveilans-harian/
+│   │   │   ├── page.tsx
+│   │   │   └── [rawatInapId]/page.tsx
+│   │   ├── surveilans-bulanan/page.tsx
+│   │   ├── operasi/
+│   │   │   ├── page.tsx
+│   │   │   └── [id]/ido/page.tsx
+│   │   ├── infeksi/page.tsx
+│   │   ├── antibiotik/page.tsx
+│   │   ├── saran-alat/page.tsx
+│   │   └── layout.tsx
+│   ├── ipcn/
+│   │   ├── dashboard/page.tsx
+│   │   ├── monitoring/
+│   │   │   ├── pasien-aktif/page.tsx
+│   │   │   └── device-day/page.tsx
+│   │   ├── grafik/bulanan/page.tsx
+│   │   ├── verifikasi/page.tsx
+│   │   ├── kasus-aktif/page.tsx
+│   │   ├── kasus-ditutup/page.tsx
+│   │   ├── pending-closure/page.tsx
+│   │   ├── verifikasi-pulang/page.tsx
+│   │   ├── verifikasi-transfer/page.tsx
+│   │   ├── pasien-pulang/page.tsx
+│   │   ├── device-alert/page.tsx
+│   │   ├── security-audit/page.tsx
+│   │   ├── saran-alat/page.tsx
+│   │   ├── laporan/
+│   │   │   ├── bulanan/page.tsx
+│   │   │   └── ido/page.tsx
+│   │   └── layout.tsx
+│   ├── auth/login/page.tsx
+│   ├── profile/page.tsx
+│   ├── settings/page.tsx
+│   ├── notifications/page.tsx
+│   ├── page.tsx                                  # Landing Page Enterprise
+│   ├── layout.tsx
 │   └── api/
 │       ├── auth/[...nextauth]/route.ts
-│       ├── pasien/route.ts
-│       ├── rawat-inap/route.ts
-│       ├── alat-terpasang/route.ts
-│       ├── surveilans-harian/route.ts
-│       ├── surveilans-bulanan/route.ts
+│       ├── health/route.ts                    # Health check
+│       ├── stats/route.ts                     # Live stats untuk landing page
+│       ├── audit-trail/route.ts               # Audit trail
+│       ├── notifications/route.ts
+│       ├── admin/
+│       │   ├── users/route.ts
+│       │   ├── users/import/route.ts
+│       │   ├── ruangan/route.ts
+│       │   ├── ruangan/import/route.ts
+│       │   ├── dokter/route.ts
+│       │   ├── dokter/import/route.ts
+│       │   ├── diagnosa/route.ts
+│       │   ├── diagnosa/import/route.ts
+│       │   ├── antibiotik/route.ts
+│       │   ├── antibiotik/import/route.ts
+│       │   ├── pasien/route.ts
+│       │   ├── pasien/import/route.ts
+│       │   ├── alat-kesehatan/route.ts
+│       │   └── stats/route.ts
+│       ├── ipcln/stats/route.ts
+│       ├── ipcln/surveilans-bulanan/route.ts
+│       ├── ipcn/stats/route.ts
+│       ├── ipcn/notifications/config/route.ts
+│       ├── ipcn/nurse-activity/route.ts
+│       ├── laporan/bulanan/route.ts
+│       ├── monitoring/
+│       │   ├── pasien-aktif/route.ts
+│       │   └── device-day/route.ts
 │       ├── operasi/route.ts
+│       ├── operasi/[id]/route.ts
+│       ├── pasien/route.ts
+│       ├── pasien/[id]/route.ts
+│       ├── pasien-pulang/route.ts
+│       ├── rawat-inap/[id]/route.ts
+│       ├── ruangan/route.ts
+│       ├── surveilans-harian/route.ts
 │       ├── surveilans-ido/route.ts
-│       ├── kejadian-infeksi/route.ts
-│       ├── phlebitis/route.ts
-│       ├── isk/route.ts
-│       ├── hap-vap/route.ts
-│       ├── iadp/route.ts
-│       ├── dekubitus/route.ts
-│       ├── hasil-kultur/route.ts
+│       ├── surveilans-ido/[id]/route.ts
+│       ├── transfer/route.ts
+│       ├── transfer/[id]/route.ts
+│       ├── verifikasi/route.ts
 │       ├── antibiotik/route.ts
-│       ├── dashboard/
-│       │   ├── rs/route.ts               # Realtime RS-wide
-│       │   └── ruangan/[id]/route.ts     # Per ruangan
-│       ├── laporan/
-│       │   ├── harian/route.ts           # Export Excel harian
-│       │   ├── bulanan/route.ts          # Export Excel bulanan
-│       │   ├── ido/route.ts
-│       │   └── phlebitis/route.ts
-│       └── cron/
-│           └── update-device-day/route.ts
+│       ├── antibiotik/export/route.ts
+│       ├── antibiotik/analytics/route.ts
+│       ├── antibiotik/audit/route.ts
+│       ├── antibiotik/notifications/route.ts
+│       ├── alat-kesehatan/route.ts
+│       ├── alat-saran/route.ts
+│       └── cron/update-device-day/route.ts
 ├── components/
-│   ├── ui/                               # Shadcn components
+│   ├── ui/                           # Shadcn & custom UI components
+│   │   ├── button.tsx
+│   │   ├── Card.tsx
+│   │   ├── StatCard.tsx
+│   │   ├── Toast.tsx
+│   │   ├── DataTable.tsx
+│   │   ├── FormField.tsx
+│   │   ├── LoadingSkeleton.tsx
+│   │   ├── PageHeader.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   ├── EmptyState.tsx
+│   │   ├── AuditTrailViewer.tsx
+│   │   └── ...
+│   ├── layout/
+│   │   ├── AppLayout.tsx
+│   │   ├── AppHeader.tsx
+│   │   └── AppSidebar.tsx
 │   ├── forms/
-│   │   ├── SurveilanHarianForm.tsx
-│   │   ├── IDOForm.tsx
-│   │   ├── PasienForm.tsx
-│   │   ├── RawatInapForm.tsx
-│   │   ├── PhlebitisForm.tsx
-│   │   └── AlatTerpasangForm.tsx
-│   ├── dashboard/
-│   │   ├── RuanganCard.tsx
-│   │   ├── DeviceDayWidget.tsx
-│   │   ├── InfeksiChart.tsx
-│   │   └── RealtimeBadge.tsx
-│   ├── tables/
-│   │   ├── SurveilanHarianTable.tsx
-│   │   └── KejadianInfeksiTable.tsx
-│   └── layout/
-│       ├── Sidebar.tsx
-│       ├── Header.tsx
-│       └── RoleGuard.tsx
+│   │   └── SurveilanHarianForm.tsx
+│   ├── providers.tsx                 # Session & Theme Provider
+│   └── theme-provider.tsx
 ├── lib/
-│   ├── auth.ts                           # NextAuth config
-│   ├── prisma.ts                         # Prisma singleton
-│   ├── deviceDay.ts                      # Kalkulasi device day
-│   ├── calculations.ts                   # Hitung rate infeksi
-│   ├── excel.ts                          # ExcelJS export
-│   ├── pdf.ts                            # jsPDF export
+│   ├── db.ts                         # Prisma singleton
+│   ├── auth.ts                       # NextAuth config
+│   ├── deviceDay.ts                  # Kalkulasi device day
+│   ├── calculations.ts               # Hitung rate infeksi
+│   ├── stats.ts                      # Live stats for landing page
+│   ├── audit-trail.js                # Audit trail logger
+│   ├── notifications.js              # Notifikasi sistem
+│   ├── excel-export.ts               # Export Excel
+│   ├── excel-import.ts               # Import Excel
+│   ├── antibiotik-status.ts          # Status antibiotik
+│   ├── daily-snapshot.js             # Daily snapshot
+│   ├── haIs-event-tracking.js        # HAI event tracking
+│   ├── reporting.js                  # Reporting utils
+│   ├── date-utils.ts
+│   ├── utils.ts
 │   └── validations/
-│       ├── surveilans.ts                 # Zod schemas
-│       └── pasien.ts
-├── hooks/
-│   ├── useRealtime.ts                    # Polling/SSE hook
-│   └── useDeviceDay.ts
+│       └── surveilans.ts
 ├── prisma/
 │   ├── schema.prisma
-│   ├── seed.ts
-│   └── migrations/
-├── types/
-│   └── index.ts
-├── middleware.ts                          # Auth & role middleware
+│   └── seed.ts
+├── public/
+│   ├── logo.png                      # Logo RS Budi Rahayu
+│   └── rs-budi-rahayu.jpg.png        # Foto gedung RS
+├── styles/
+│   └── globals.css
+├── middleware.ts                      # Auth & role middleware
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+├── package.json
 ├── docker-compose.yml
 ├── Dockerfile
 └── .env
@@ -274,13 +329,13 @@ ppi-surveillance/
 
 ---
 
-## 5. AUTHENTICATION & AUTHORIZATION
+## 6. AUTHENTICATION & AUTHORIZATION
 
 ### NextAuth Config (lib/auth.ts):
 ```typescript
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -321,9 +376,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session
     }
   },
-  pages: { signIn: "/login" }
+  pages: { signIn: "/auth/login" }
 })
 ```
+
+### Session Loading (components/providers.tsx):
+- Menampilkan animasi loading saat session sedang di-load
+- Menggunakan logo RS dengan pulse effect
+- Spinner bouncing dengan teks "Memuat sistem..."
 
 ### Middleware Proteksi Route (middleware.ts):
 ```typescript
@@ -340,13 +400,13 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const role = req.auth?.user?.role
 
-  if (!req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url))
+  if (!req.auth && !pathname.startsWith("/api") && pathname !== "/" && pathname !== "/auth/login") {
+    return NextResponse.redirect(new URL("/auth/login", req.url))
   }
 
   for (const [path, roles] of Object.entries(ROLE_ROUTES)) {
-    if (pathname.startsWith(`/(dashboard)${path}`) && !roles.includes(role!)) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url))
+    if (pathname.startsWith(path) && !roles.includes(role!)) {
+      return NextResponse.redirect(new URL("/", req.url))
     }
   }
 })
@@ -354,13 +414,21 @@ export default auth((req) => {
 
 ---
 
-## 6. API ENDPOINTS LENGKAP
+## 7. API ENDPOINTS LENGKAP
+
+### Landing Page:
+```
+GET  /api/health                        # Health check
+GET  /api/stats                         # Live statistics (Total Pasien, Surveilans Aktif, dll)
+GET  /api/audit-trail?limit=5           # Aktivitas terbaru
+```
 
 ### Dashboard (Realtime):
 ```
-GET  /api/dashboard/rs                    # Summary seluruh RS
-GET  /api/dashboard/ruangan/:id           # Summary per ruangan
-GET  /api/dashboard/device-day            # Akumulasi device day
+GET  /api/admin/stats                   # Summary admin
+GET  /api/ipcn/stats                    # Summary IPCN
+GET  /api/ipcln/stats                   # Summary IPCLN
+GET  /api/monitoring/device-day         # Akumulasi device day
 ```
 
 ### Pasien & Rawat Inap:
@@ -389,8 +457,8 @@ GET    /api/surveilans-harian?rawatInapId=&tanggal=
 POST   /api/surveilans-harian
 PUT    /api/surveilans-harian/:id
 
-GET    /api/surveilans-bulanan?ruanganId=&bulan=&tahun=
-POST   /api/surveilans-bulanan            # Trigger rekap otomatis
+GET    /api/ipcln/surveilans-bulanan?ruanganId=&bulan=&tahun=
+POST   /api/ipcln/surveilans-bulanan     # Trigger rekap otomatis
 ```
 
 ### Operasi & IDO:
@@ -413,19 +481,29 @@ POST   /api/dekubitus
 PATCH  /api/kejadian-infeksi/:id/verifikasi
 ```
 
+### Antibiotik:
+```
+GET    /api/antibiotik
+POST   /api/antibiotik
+GET    /api/antibiotik/export
+GET    /api/antibiotik/analytics
+GET    /api/antibiotik/audit
+```
+
 ### Laporan & Export:
 ```
-GET    /api/laporan/harian?ruanganId=&tanggal=&format=xlsx|pdf
 GET    /api/laporan/bulanan?ruanganId=&bulan=&tahun=&format=xlsx|pdf
-GET    /api/laporan/ido?ruanganId=&bulan=&tahun=&format=xlsx|pdf
-GET    /api/laporan/phlebitis?ruanganId=&bulan=&tahun=&format=xlsx|pdf
-GET    /api/laporan/rekap-ruangan?bulan=&tahun=&format=xlsx
-GET    /api/laporan/rekap-rs?bulan=&tahun=&format=xlsx|pdf
+```
+
+### Audit Trail & Notifikasi:
+```
+GET    /api/audit-trail                  # Log aktivitas sistem
+GET    /api/notifications                # Notifikasi user
 ```
 
 ---
 
-## 7. PERHITUNGAN RATE INFEKSI (lib/calculations.ts)
+## 8. PERHITUNGAN RATE INFEKSI (lib/calculations.ts)
 
 ```typescript
 // Phlebitis Rate = (Jumlah Phlebitis / Total Hari Rawat) × 1000
@@ -455,73 +533,84 @@ export const hitungIdoRate = (jumlah: number, totalOperasi: number) =>
 
 ---
 
-## 8. CONTOH DASHBOARD IPCN (SERVER COMPONENT)
+## 9. LIVE STATISTICS LANDING PAGE (lib/stats.ts)
 
 ```typescript
-// app/(dashboard)/ipcn/dashboard/page.tsx
-import { prisma } from "@/lib/prisma"
+export async function getSystemStats() {
+  const [
+    totalPasien,
+    totalSurveilansAktif,
+    totalKasusInfeksiTerverifikasi,
+    totalAntibiotikAktif,
+    totalDeviceDayBulanIni,
+    totalNotifikasiAktif,
+    totalLaporanBulanan,
+  ] = await Promise.all([
+    prisma.rawatInap.count({ where: { status: "aktif" } }),
+    prisma.surveilansHarian.count({
+      where: { tanggal: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } }
+    }),
+    prisma.kejadianInfeksi.count({ where: { statusVerifikasi: "terverifikasi" } }),
+    prisma.penggunaanAntibiotik.count({ where: { status: "aktif" } }),
+    prisma.alatTerpasang.aggregate({
+      where: {
+        OR: [
+          { tanggalLepas: null },
+          { tanggalLepas: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } }
+        ]
+      },
+      _sum: { deviceDay: true }
+    }),
+    prisma.notification.count({ where: { isRead: false } }),
+    prisma.surveilansBulanan.count({
+      where: { bulan: new Date().getMonth(), tahun: new Date().getFullYear() }
+    }),
+  ])
 
-export default async function DashboardIPCN() {
-  const ruanganList = await prisma.ruangan.findMany({
-    where: { isActive: true },
-    include: {
-      rawatInap: {
-        where: { status: "aktif" },
-        include: {
-          alatTerpasang: { where: { masihTerpasang: true } },
-          kejadianInfeksi: {
-            where: {
-              tanggalKejadian: {
-                gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-
-  const dashboardData = ruanganList.map(ruangan => {
-    const pasienAktif = ruangan.rawatInap.length
-    const allAlat = ruangan.rawatInap.flatMap(r => r.alatTerpasang)
-    const allInfeksi = ruangan.rawatInap.flatMap(r => r.kejadianInfeksi)
-
-    return {
-      nama: ruangan.nama,
-      pasienAktif,
-      infusDay: allAlat.filter(a => a.jenisAlat === "IVL").reduce((s, a) => s + a.deviceDay, 0),
-      kateterDay: allAlat.filter(a => a.jenisAlat === "UC").reduce((s, a) => s + a.deviceDay, 0),
-      ventilatorDay: allAlat.filter(a => a.jenisAlat === "ETT_V").reduce((s, a) => s + a.deviceDay, 0),
-      phlebitis: allInfeksi.filter(i => i.jenisInfeksi === "PHLEBITIS").length,
-      isk: allInfeksi.filter(i => i.jenisInfeksi === "ISK").length,
-      hap: allInfeksi.filter(i => i.jenisInfeksi === "HAP").length,
-      vap: allInfeksi.filter(i => i.jenisInfeksi === "VAP").length,
-      iadp: allInfeksi.filter(i => i.jenisInfeksi === "IADP").length,
-    }
-  })
-
-  return <DashboardGrid data={dashboardData} />
+  return {
+    totalPasien,
+    totalSurveilansAktif,
+    totalKasusInfeksiTerverifikasi,
+    totalAntibiotikAktif,
+    totalDeviceDayBulanIni: totalDeviceDayBulanIni._sum.deviceDay || 0,
+    totalNotifikasiAktif,
+    totalLaporanBulanan,
+  }
 }
-```
-
-### Dashboard Output (sesuai spesifikasi):
-```
-┌─────────────────────────────────┐
-│  ICU                            │
-│  Pasien Aktif    : 12           │
-│  Infus Day       : 35           │
-│  Kateter Day     : 20           │
-│  Ventilator Day  : 10           │
-│  Phlebitis       : 2            │
-│  ISK             : 1            │
-│  HAP             : 0            │
-│  VAP             : 1            │
-└─────────────────────────────────┘
 ```
 
 ---
 
-## 9. EXPORT EXCEL (lib/excel.ts)
+## 10. AUDIT TRAIL SISTEM (lib/audit-trail.js)
+
+Mencatat semua aktivitas penting:
+- Login & logout
+- Perubahan data pasien
+- Input surveilans
+- Verifikasi kasus infeksi
+- Penggunaan antibiotik
+- dll.
+
+```javascript
+export const logAuditTrail = async (action, entityType, entityId, userId, userName, details) => {
+  return await prisma.auditTrail.create({
+    data: {
+      action,
+      entityType,
+      entityId,
+      userId,
+      userName,
+      details: JSON.stringify(details),
+      ipAddress: "::1", // Diisi dari request
+      timestamp: new Date()
+    }
+  })
+}
+```
+
+---
+
+## 11. EXPORT EXCEL (lib/excel-export.ts)
 
 ```typescript
 import ExcelJS from "exceljs"
@@ -585,88 +674,13 @@ export async function exportSurveilanHarian(
     ]
   })
 
-  // Keterangan footer
-  const lastRow = 8 + data.length + 1
-  ws.getCell(lastRow, 1).value = "Keterangan :"
-  ws.getCell(lastRow + 1, 1).value = "S : Suhu\t\t\tCVL : Central Vena Line"
-  ws.getCell(lastRow + 2, 1).value = "U : Usia\t\t\tHAP : Hospital Acquired Pneumonia"
-  ws.getCell(lastRow + 3, 1).value = "JK : Jenis Kelamin\t\tVAP : Ventilator Associated Pneumonia"
-  ws.getCell(lastRow + 4, 1).value = "UC : Urine Kateter\t\tIADP : Infeksi Aliran Darah Primer"
-  ws.getCell(lastRow + 5, 1).value = "IVL : Intra Vena Line\t\tAB : Antibiotik"
-
-  return Buffer.from(await wb.xlsx.writeBuffer())
-}
-
-// Laporan Bulanan Phlebitis — format identik LAPORAN_BULANAN_Phlebitis_IPCLN.docx
-export async function exportLaporanPhlebitis(
-  ruanganNama: string,
-  bulan: string,
-  data: PhlebitisRow[]
-): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook()
-  const ws = wb.addWorksheet("Laporan Phlebitis")
-
-  ws.mergeCells("A1:H1")
-  ws.getCell("A1").value = "LAPORAN BULANAN"
-  ws.mergeCells("A2:H2")
-  ws.getCell("A2").value = "Angka Kejadian Infeksi Jarum Infuse/ Phlebitis (ILI)"
-  ws.getCell("A3").value = `Bulan : ${bulan}`
-  ws.getCell("A4").value = `Ruang : ${ruanganNama}`
-
-  const colHeaders = [
-    "NO","TGL","NAMA PASIEN","NO RM","DIAGNOSA MEDIS",
-    "KEJADIAN PHLEBITIS\n(YA/TIDAK)",
-    "JIKA YA PADA KOLOM 6\nTERIDENTIFIKASI HARI KE BERAPA?",
-    "KET"
-  ]
-  const headerRow = ws.getRow(6)
-  colHeaders.forEach((h, i) => {
-    const cell = headerRow.getCell(i + 1)
-    cell.value = h
-    cell.font = { bold: true }
-    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true }
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9E1F2" } }
-    cell.border = {
-      top: { style: "thin" }, left: { style: "thin" },
-      bottom: { style: "thin" }, right: { style: "thin" }
-    }
-  })
-  headerRow.height = 40
-
-  data.forEach((row, idx) => {
-    const r = ws.getRow(7 + idx)
-    r.values = [
-      idx + 1, row.tanggal, row.namaPasien, row.noRm,
-      row.diagnosa, row.adaPhlebitis ? "YA" : "TIDAK",
-      row.adaPhlebitis ? `Hari ke-${row.hariKe}` : "-",
-      row.keterangan
-    ]
-    r.eachCell(cell => {
-      cell.border = {
-        top: { style: "thin" }, left: { style: "thin" },
-        bottom: { style: "thin" }, right: { style: "thin" }
-      }
-      cell.alignment = { vertical: "middle", wrapText: true }
-    })
-  })
-
-  const lastRow = 7 + data.length + 2
-  ws.getCell(lastRow, 6).value = "Pembuat Laporan"
-  ws.getCell(lastRow + 4, 6).value = "IPCLN"
-
-  // Column widths
-  ws.columns = [
-    { width: 5 }, { width: 12 }, { width: 25 }, { width: 15 },
-    { width: 30 }, { width: 20 }, { width: 30 }, { width: 20 }
-  ]
-
   return Buffer.from(await wb.xlsx.writeBuffer())
 }
 ```
 
 ---
 
-## 10. DOCKER COMPOSE
+## 12. DOCKER COMPOSE
 
 ```yaml
 # docker-compose.yml
@@ -678,48 +692,15 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: mysql://ppi_user:ppi_password@db:3306/ppi_db
+      DATABASE_URL: "file:./dev.db" # SQLite
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: http://localhost:3000
-      CRON_SECRET: ${CRON_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
+      NEXTAUTH_URL: "http://localhost:3000"
     restart: unless-stopped
-
-  db:
-    image: mysql:8.0
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ppi_db
-      MYSQL_USER: ppi_user
-      MYSQL_PASSWORD: ppi_password
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-
-volumes:
-  mysql_data:
 ```
 
 ---
 
-## 11. DOCKERFILE
+## 13. DOCKERFILE
 
 ```dockerfile
 FROM node:20-alpine AS base
@@ -753,7 +734,7 @@ CMD ["node", "server.js"]
 
 ---
 
-## 12. PACKAGE.JSON (DEPENDENCIES UTAMA)
+## 14. PACKAGE.JSON (DEPENDENCIES UTAMA)
 
 ```json
 {
@@ -769,12 +750,15 @@ CMD ["node", "server.js"]
     "jspdf": "^2.5.0",
     "jspdf-autotable": "^3.8.0",
     "date-fns": "^3.0.0",
+    "date-fns-tz": "^3.0.0",
     "recharts": "^2.12.0",
     "@tanstack/react-query": "^5.0.0",
     "react-hook-form": "^7.53.0",
     "@hookform/resolvers": "^3.9.0",
     "sonner": "^1.5.0",
-    "lucide-react": "^0.400.0"
+    "lucide-react": "^0.400.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
     "prisma": "^5.0.0",
@@ -787,14 +771,15 @@ CMD ["node", "server.js"]
 
 ---
 
-## 13. ALUR FORM SURVEILANS HARIAN (UI/UX)
+## 15. ALUR FORM SURVEILANS HARIAN (UI/UX)
 
 ### Prinsip Desain:
 1. Form web **semirip mungkin** dengan formulir kertas yang sudah digunakan
 2. Perawat tidak perlu belajar ulang — urutan kolom sama persis
-3. Layout tabel horizontal pada layar besar, card pada mobile
+3. Layout **responsive**: Card pada mobile, tabel horizontal pada layar besar
 4. Checkmark/toggle untuk kolom "ada/tidak ada"
 5. Autocomplete untuk diagnosa dan obat antibiotik
+6. **Mobile First**: Semua fitur dapat diakses dari perangkat mobile
 
 ### Alur Input IPCLN:
 ```
@@ -807,56 +792,9 @@ CMD ["node", "server.js"]
 7. Submit → data langsung muncul di dashboard IPCN real-time
 ```
 
-### Form Surveilans Harian (struktur):
-```tsx
-// Mirip dengan layout tabel formulir kertas
-<SurveilanHarianForm>
-  <Section title="Data Pasien">
-    <Field label="Tanggal" />
-    <Field label="Suhu (S)" type="number" />
-    <Field label="Nama / No. RM" disabled /> {/* Auto dari rawat_inap */}
-    <Field label="Usia" disabled />
-    <Field label="JK" disabled />
-    <Field label="DX Medis" disabled />
-  </Section>
-
-  <Section title="Tindakan (Device Terpasang)">
-    <Toggle label="UC" /> {/* Urine Kateter */}
-    <Toggle label="IVL" /> {/* Infus */}
-    <Toggle label="CVL" /> {/* Central Line */}
-    <Toggle label="ETT/V" /> {/* Ventilator */}
-  </Section>
-
-  <Section title="Infeksi Rumah Sakit">
-    <Toggle label="ISK" onToggle={showISKDetail} />
-    <Toggle label="Phlebitis" onToggle={showPhlebitisDetail} />
-    <Toggle label="HAP" onToggle={showHAPDetail} />
-    <Toggle label="VAP" onToggle={showVAPDetail} />
-    <Toggle label="IADP" onToggle={showIADPDetail} />
-  </Section>
-
-  <Section title="Lain-lain">
-    <Toggle label="Tirah Baring" />
-    <Toggle label="Dekubitus" onToggle={showDekubitusDetail} />
-  </Section>
-
-  <Section title="Hasil Kultur">
-    <Field label="Sputum" />
-    <Field label="Darah" />
-    <Field label="Urine" />
-  </Section>
-
-  <Section title="Antibiotik">
-    <AntibiotikAutocomplete label="AB 1" />
-    <AntibiotikAutocomplete label="AB 2" />
-    <AntibiotikAutocomplete label="AB 3" />
-  </Section>
-</SurveilanHarianForm>
-```
-
 ---
 
-## 14. SEED DATA AWAL (prisma/seed.ts)
+## 16. SEED DATA AWAL (prisma/seed.ts)
 
 ```typescript
 // Roles
@@ -876,63 +814,87 @@ const ruanganList = [
   { nama: "OK", kode: "OK", jenis: "OK" },
 ]
 
-// Admin default
-const adminUser = {
-  name: "Administrator",
-  email: "admin@ppi.rsubudirahayupkl.id",
-  password: await bcrypt.hash("admin123", 12),
-  roleId: 1
-}
+// Users default
+const users = [
+  {
+    name: "Administrator",
+    email: "admin@rs.com",
+    password: await bcrypt.hash("admin123", 12),
+    roleId: 1
+  },
+  {
+    name: "IPCN",
+    email: "ipcn@rs.com",
+    password: await bcrypt.hash("admin123", 12),
+    roleId: 2
+  },
+  {
+    name: "IPCLN ICU",
+    email: "ipcln.icu@rs.com",
+    password: await bcrypt.hash("admin123", 12),
+    roleId: 3,
+    ruanganId: 1
+  }
+]
 ```
 
 ---
 
-## 15. ENVIRONMENT VARIABLES (.env)
+## 17. ENVIRONMENT VARIABLES (.env)
 
 ```env
-# Database
-DATABASE_URL="mysql://ppi_user:ppi_password@localhost:3306/ppi_db"
+# Database (SQLite)
+DATABASE_URL="file:./dev.db"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-min-32-chars"
 
-# Cron Job Protection
-CRON_SECRET="your-cron-secret"
-
-# MySQL Docker
-MYSQL_ROOT_PASSWORD="root_password"
+# Next.js
+NODE_ENV="development"
 ```
 
 ---
 
-## 16. PANDUAN INSTALASI
+## 18. PANDUAN INSTALASI
 
 ```bash
 # 1. Clone & install
-git clone <repo>
-cd ppi-surveillance
+cd "sistem ppi rumah sakit budi rahayu"
 npm install
 
 # 2. Setup environment
 cp .env.example .env
 # Edit .env sesuai kebutuhan
 
-# 3. Jalankan Docker (MySQL)
-docker compose up -d db
-
-# 4. Setup database
+# 3. Setup database
 npx prisma migrate dev --name init
 npx prisma db seed
 
-# 5. Jalankan development
+# 4. Jalankan development
 npm run dev
 
-# 6. Atau jalankan semua via Docker
-docker compose up -d
+# 5. Akses aplikasi
+# Browser: http://localhost:3000
+# Mobile: http://[IP-PC]:3000 (pastikan di jaringan yang sama)
 ```
 
 ---
 
+## 19. AKSES MOBILE
+
+Sistem **fully responsive** dan dapat diakses dari perangkat mobile:
+- Pastikan PC/laptop dan mobile terhubung ke **jaringan WiFi yang sama**
+- Cari IP address PC (contoh: `192.168.1.100`)
+- Akses di browser mobile: `http://192.168.1.100:3000`
+
+Fitur mobile:
+- Landing page dengan card 2 kolom
+- Form yang mudah diisi dengan jari
+- Tombol yang cukup besar untuk di-tap
+- Tidak ada horizontal scroll
+
+---
+
 *Dokumen ini merupakan arsitektur lengkap Sistem Surveilans PPI RSU Budi Rahayu Pekalongan.*
-*Versi: 1.0 | Generated: Juni 2026*
+*Versi: 2.0 | Updated: Juni 2026*

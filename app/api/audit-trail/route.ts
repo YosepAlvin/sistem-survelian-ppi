@@ -4,19 +4,24 @@ import { auth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await auth()
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-        }
-        // Only allow ADMIN, IPCN, IPCLN roles
-        const userRole = (session.user as any).role
-        if (userRole !== 'ADMIN' && userRole !== 'IPCN' && userRole !== 'IPCLN') {
-            return NextResponse.json({ error: "Unauthorized. Admin, IPCN, or IPCLN role required." }, { status: 403 })
-        }
-        
-        // Get rawat_inap_id from search params
+        // Get search params
         const { searchParams } = new URL(request.url)
         const rawat_inap_id = searchParams.get('rawat_inap_id')
+        const limit = searchParams.get('limit')
+        const isPublicLandingRequest = limit && !rawat_inap_id
+        
+        // For public landing request (limit only), skip authentication
+        if (!isPublicLandingRequest) {
+            const session = await auth()
+            if (!session) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+            }
+            // Only allow ADMIN, IPCN, IPCLN roles
+            const userRole = (session.user as any).role
+            if (userRole !== 'ADMIN' && userRole !== 'IPCN' && userRole !== 'IPCLN') {
+                return NextResponse.json({ error: "Unauthorized. Admin, IPCN, or IPCLN role required." }, { status: 403 })
+            }
+        }
         
         if (rawat_inap_id) {
             // Get rawat inap data to confirm ownership/access
@@ -95,8 +100,12 @@ export async function GET(request: NextRequest) {
                 auditTrails: auditTrails
             })
         } else {
-            // If no rawat_inap_id, return all audit trails for security-audit page
+            // If no rawat_inap_id, return audit trails
+            let take = undefined
+            if (limit) take = parseInt(limit)
+            
             const auditTrails = await db.auditTrail.findMany({
+                take,
                 include: {
                     user: {
                         select: {

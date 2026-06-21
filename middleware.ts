@@ -38,11 +38,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/", nextUrl))
   }
 
-  if (isIpcnPageRoute && role !== "IPCN") {
+  if (isIpcnPageRoute && role !== "IPCN" && role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", nextUrl))
   }
 
-  if (isIpclnPageRoute && role !== "IPCLN") {
+  if (isIpclnPageRoute && role !== "IPCLN" && role !== "IPCN" && role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", nextUrl))
   }
 

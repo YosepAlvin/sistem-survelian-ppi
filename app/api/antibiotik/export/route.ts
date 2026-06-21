@@ -89,7 +89,8 @@ export async function GET(req: Request) {
         ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
-        ab.efek_samping
+        ab.efek_samping,
+        ab.tanggal_review
       )
       return [
         new Date(ab.tanggal_mulai).toISOString().split("T")[0], // Tanggal Input = tanggal_mulai
@@ -100,7 +101,7 @@ export async function GET(req: Request) {
         ab.antibiotik.nama,
         ab.dosis || "-",
         new Date(ab.tanggal_mulai).toISOString().split("T")[0],
-        ab.tanggal_selesai ? new Date(ab.tanggal_selesai).toISOString().split("T")[0] : "-",
+        ab.tanggal_selesai_aktual ? new Date(ab.tanggal_selesai_aktual).toISOString().split("T")[0] : "-",
         hari_ke,
         statusLabel(status),
       ]
@@ -123,7 +124,7 @@ export async function GET(req: Request) {
       groups[name].count++
 
       const startDate = new Date(ab.tanggal_mulai)
-      const endDate = ab.tanggal_selesai ? new Date(ab.tanggal_selesai) : new Date()
+      const endDate = ab.tanggal_selesai_aktual ? new Date(ab.tanggal_selesai_aktual) : new Date()
       const days = Math.max(
         1,
         Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -136,7 +137,8 @@ export async function GET(req: Request) {
         ab.tanggal_selesai_aktual,
         ab.antibiotik.is_restriksi,
         ab.antibiotik.durasi_maks_hari,
-        ab.efek_samping
+        ab.efek_samping,
+        ab.tanggal_review
       )
       if (status === "PERLU_REVIEW" || status === "OVERDUE") groups[name].reviewCases++
     })
@@ -178,7 +180,8 @@ export async function GET(req: Request) {
           ab.tanggal_selesai_aktual,
           ab.antibiotik.is_restriksi,
           ab.antibiotik.durasi_maks_hari,
-          ab.efek_samping
+          ab.efek_samping,
+          ab.tanggal_review
         )
         // Include records that need/needed review, OR already have review notes
         return (
@@ -195,7 +198,8 @@ export async function GET(req: Request) {
           ab.tanggal_selesai_aktual,
           ab.antibiotik.is_restriksi,
           ab.antibiotik.durasi_maks_hari,
-          ab.efek_samping
+          ab.efek_samping,
+          ab.tanggal_review
         )
         return [
           ab.rawat_inap.pasien.nama,

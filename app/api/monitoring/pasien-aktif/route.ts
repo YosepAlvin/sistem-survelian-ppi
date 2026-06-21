@@ -31,7 +31,7 @@ export async function GET() {
     const formatted = pasienAktif.map((ri) => {
       // Find the most recent active antibiotic (no tanggal_selesai)
       const activeAntibiotik = ri.penggunaan_antibiotik.find(
-        (ab: any) => !ab.tanggal_selesai
+        (ab: any) => !ab.tanggal_selesai_aktual
       ) ?? null
 
       let antibiotikInfo: {
@@ -52,7 +52,8 @@ export async function GET() {
           (activeAntibiotik as any).tanggal_selesai_aktual,
           (activeAntibiotik as any).antibiotik.is_restriksi,
           (activeAntibiotik as any).antibiotik.durasi_maks_hari,
-          (activeAntibiotik as any).efek_samping
+          (activeAntibiotik as any).efek_samping,
+          (activeAntibiotik as any).tanggal_review
         )
         antibiotikInfo = {
           nama: (activeAntibiotik as any).antibiotik.nama,

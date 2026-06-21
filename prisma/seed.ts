@@ -321,9 +321,18 @@ async function main() {
 
   // 7. Create Threshold Config
   const thresholds = [
-    { jenisAlat: 'Urine kateter', hariThreshold: 7 },
-    { jenisAlat: 'Ventilator', hariThreshold: 14 },
+    { jenisAlat: 'Vena sentra', hariThreshold: 14 },
     { jenisAlat: 'Vena perifer', hariThreshold: 3 },
+    { jenisAlat: 'Arteri', hariThreshold: 7 },
+    { jenisAlat: 'Umbilikai', hariThreshold: 7 },
+    { jenisAlat: 'Urine kateter', hariThreshold: 7 },
+    { jenisAlat: 'Suprapubik kateter', hariThreshold: 7 },
+    { jenisAlat: 'Ventilator', hariThreshold: 14 },
+    { jenisAlat: 'Endotracheal Tube (ETT)', hariThreshold: 14 },
+    { jenisAlat: 'Trakeostomi', hariThreshold: 21 },
+    { jenisAlat: 'Nasogastric Tube (NGT)', hariThreshold: 30 },
+    { jenisAlat: 'Drain operasi', hariThreshold: 14 },
+    { jenisAlat: 'Chest tube (WSD)', hariThreshold: 14 },
   ]
 
   for (const t of thresholds) {

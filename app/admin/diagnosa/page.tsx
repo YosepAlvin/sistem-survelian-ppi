@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button"
 import { FormField, FormInput } from "@/components/ui/FormField"
 import { DataTable } from "@/components/ui/DataTable"
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
-import { Plus, Eye, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Eye, Edit2, Trash2, Download, Upload } from 'lucide-react'
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import useSWR from 'swr'
 import axios from 'axios'
 import { fetcher } from '@/lib/fetcher'
+import { readExcelFile, generateTemplate } from "@/lib/excel-import"
 
 type Diagnosa = {
   id: string;
@@ -98,6 +99,40 @@ export default function DiagnosaPage() {
     }
   }
 
+  const handleDownloadTemplate = () => {
+    generateTemplate(
+      ['kode_icd', 'nama', 'kategori'],
+      'template_diagnosa'
+    )
+    showToast({
+      type: 'success',
+      title: 'Template Downloaded',
+      message: 'Template Excel untuk import telah diunduh.'
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await readExcelFile(file)
+      await axios.post("/api/admin/diagnosa/import", data)
+      showToast({
+        type: 'success',
+        title: 'Import Berhasil',
+        message: `${data.length} data diagnosa berhasil diimport.`
+      })
+      mutateDiagnosa()
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Gagal Import',
+        message: err.response?.data?.error || err.message
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -106,13 +141,41 @@ export default function DiagnosaPage() {
             title="Manajemen Diagnosa"
             description="Kelola data diagnosa dan kode ICD-10"
             actions={
-              <Button
-                onClick={() => setShowForm(!showForm)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Plus size={18} />
-                {showForm ? "Batal" : "Tambah Diagnosa"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadTemplate}
+                  className="flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  Download Template
+                </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <span>
+                      <Upload size={16} />
+                      Import Excel
+                    </span>
+                  </Button>
+                </label>
+                <Button
+                  onClick={() => setShowForm(!showForm)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus size={18} />
+                  {showForm ? "Batal" : "Tambah Diagnosa"}
+                </Button>
+              </div>
             }
           />
 

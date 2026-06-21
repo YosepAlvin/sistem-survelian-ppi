@@ -19,6 +19,8 @@ type NotificationItem = {
   isRead: boolean
   createdAt: string | null
   createdBy: string | null
+  relatedEntityType?: string
+  relatedEntityId?: number
 }
 
 export default function NotificationsPage() {
@@ -113,6 +115,11 @@ export default function NotificationsPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={() => toggleRead(notif.id, notif.isRead)} variant="outline" className="text-slate-200 border-slate-700">{notif.isRead ? 'Tandai belum dibaca' : 'Tandai sudah dibaca'}</Button>
+                  {notif.relatedEntityType === 'PenggunaanAntibiotik' && (
+                    <Button onClick={() => router.push(`/ipcln/antibiotik?abId=${notif.relatedEntityId}`)} className="bg-purple-600 hover:bg-purple-700 text-white">
+                      Buka Detail Antibiotik
+                    </Button>
+                  )}
                   {(notif.payload?.infectionType || notif.payload?.ruangan) && <Button onClick={() => router.push('/ipcn/verifikasi')} className="bg-emerald-600 hover:bg-emerald-700 text-white">Buka Verifikasi</Button>}
                 </div>
               </div>

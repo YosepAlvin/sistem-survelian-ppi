@@ -217,9 +217,11 @@ const AppSidebar: React.FC = () => {
           icon: <Settings size={20} />,
           children: [
             { label: 'User Management', href: '/admin/users', icon: <Users size={18} />, isActive: isActive('/admin/users') },
+            { label: 'Master Pasien', href: '/admin/pasien', icon: <Users size={18} />, isActive: isActive('/admin/pasien') },
             { label: 'Ruangan Unit', href: '/admin/ruangan', icon: <Home size={18} />, isActive: isActive('/admin/ruangan') },
             { label: 'Dokter Spesialis', href: '/admin/dokter', icon: <UserIcon size={18} />, isActive: isActive('/admin/dokter') },
-            { label: 'Master Diagnosa', href: '/admin/diagnosa', icon: <FileText size={18} />, isActive: isActive('/admin/diagnosa') }
+            { label: 'Master Diagnosa', href: '/admin/diagnosa', icon: <FileText size={18} />, isActive: isActive('/admin/diagnosa') },
+            { label: 'Master Antibiotik', href: '/admin/antibiotik', icon: <FileText size={18} />, isActive: isActive('/admin/antibiotik') }
           ]
         },
         { label: 'System Settings', href: '/admin/settings', icon: <Settings size={20} />, isActive: isActive('/admin/settings') },
@@ -248,6 +250,11 @@ const AppSidebar: React.FC = () => {
             { label: 'Kasus Ditutup', href: '/ipcn/kasus-ditutup', icon: <ShieldCheck size={18} />, isActive: isActive('/ipcn/kasus-ditutup') },
             { label: 'Device Alerts', href: '/ipcn/device-alert', icon: <BarChart3 size={18} />, isActive: isActive('/ipcn/device-alert') },
           ]
+        },
+        { 
+          label: 'Monitoring Antibiotik', 
+          href: '/ipcln/antibiotik', 
+          icon: <FileText size={20} />, isActive: isActive('/ipcln/antibiotik') 
         },
         { label: 'Monitoring Pasien', href: '/ipcn/monitoring/pasien-aktif', icon: <Users size={20} />, isActive: isActive('/ipcn/monitoring/pasien-aktif') },
         { label: 'Pasien Pulang', href: '/ipcn/pasien-pulang', icon: <Users size={20} />, isActive: isActive('/ipcn/pasien-pulang') },

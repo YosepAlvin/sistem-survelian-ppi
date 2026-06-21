@@ -16,6 +16,7 @@ export type AntibiotikStatus =
   | "AKAN_SELESAI"
   | "OVERDUE"
   | "PERLU_REVIEW"
+  | "SUDAH_DIREVIEW"
   | "SELESAI"
 
 export interface AntibiotikStatusResult {
@@ -28,10 +29,12 @@ export interface AntibiotikStatusResult {
  * Calculate the status and supporting metadata for one PenggunaanAntibiotik record.
  *
  * @param tanggal_mulai   - therapy start date
- * @param tanggal_selesai - therapy end date (null = still active)
+ * @param tanggal_rencana_selesai - planned end date
+ * @param tanggal_selesai_aktual - actual end date (null = still active)
  * @param is_restriksi    - antibiotic is a restricted type
  * @param durasi_maks_hari - maximum allowed duration in days
  * @param efek_samping    - side effect string (null/empty = none)
+ * @param tanggal_review  - date when IPCN reviewed (null = not reviewed yet)
  * @param today           - optional override for "today" (defaults to current date at midnight)
  */
 export function calcAntibiotikStatus(
@@ -41,6 +44,7 @@ export function calcAntibiotikStatus(
   is_restriksi: boolean,
   durasi_maks_hari: number | null | undefined,
   efek_samping: string | null | undefined,
+  tanggal_review: Date | string | null | undefined,
   today?: Date
 ): AntibiotikStatusResult {
   const todayDate = today ? new Date(today) : new Date()
@@ -93,6 +97,9 @@ export function calcAntibiotikStatus(
   }
 
   if (alasan_review.length > 0) {
+    if (tanggal_review) {
+      return { status: "SUDAH_DIREVIEW", hari_ke, alasan_review }
+    }
     return { status: "PERLU_REVIEW", hari_ke, alasan_review }
   }
 
@@ -102,21 +109,23 @@ export function calcAntibiotikStatus(
 /** Human-readable label for a status value */
 export function statusLabel(status: AntibiotikStatus): string {
   switch (status) {
-    case "AKTIF":       return "Aktif"
-    case "AKAN_SELESAI":return "Akan Selesai"
-    case "OVERDUE":     return "Overdue"
-    case "PERLU_REVIEW":return "Perlu Review"
-    case "SELESAI":     return "Selesai"
+    case "AKTIF":         return "Aktif"
+    case "AKAN_SELESAI":  return "Akan Selesai"
+    case "OVERDUE":       return "Overdue"
+    case "PERLU_REVIEW":  return "Perlu Review"
+    case "SUDAH_DIREVIEW":return "Sudah Direview"
+    case "SELESAI":       return "Selesai"
   }
 }
 
 /** Tooltip text for each status */
 export const STATUS_TOOLTIP: Record<AntibiotikStatus, string> = {
-  AKTIF:        "Terapi sedang berjalan",
-  AKAN_SELESAI: "Tanggal rencana selesai dalam 2 hari ke depan",
-  OVERDUE:      "Melewati tanggal rencana selesai",
-  PERLU_REVIEW: "Memerlukan evaluasi IPCN",
-  SELESAI:      "Terapi telah diselesaikan",
+  AKTIF:          "Terapi sedang berjalan",
+  AKAN_SELESAI:   "Tanggal rencana selesai dalam 2 hari ke depan",
+  OVERDUE:        "Melewati tanggal rencana selesai",
+  PERLU_REVIEW:   "Memerlukan evaluasi IPCN",
+  SUDAH_DIREVIEW: "Sudah direview oleh IPCN",
+  SELESAI:        "Terapi telah diselesaikan",
 }
 
 export type AntibiotikStatusCounts = Record<AntibiotikStatus, number> & {
@@ -129,6 +138,7 @@ export function countAntibiotikStatuses(records: any[], today?: Date): Antibioti
     AKAN_SELESAI: 0,
     OVERDUE: 0,
     PERLU_REVIEW: 0,
+    SUDAH_DIREVIEW: 0,
     SELESAI: 0,
   }
 
@@ -140,6 +150,7 @@ export function countAntibiotikStatuses(records: any[], today?: Date): Antibioti
       ab.antibiotik?.is_restriksi ?? false,
       ab.antibiotik?.durasi_maks_hari,
       ab.efek_samping,
+      ab.tanggal_review,
       today
     )
     counts[status]++

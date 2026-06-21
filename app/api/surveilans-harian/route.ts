@@ -7,6 +7,7 @@ import { buildDeviceAlertMessage, shouldTriggerDeviceAlert } from "@/lib/notific
 import { resolveSurveyDate } from "@/lib/surveilans-date"
 import { buildAuditTrailEntry, formatAuditValue } from "@/lib/audit-trail"
 import { z } from "zod"
+import { hitungDeviceDay } from "@/lib/deviceDay"
 
 // Schema validasi ringkas untuk surveilans harian
 const harianSchema = z.object({
@@ -262,8 +263,24 @@ export async function POST(req: Request) {
         surveyDate,
       })
 
-      // Audit device changes
+      // Audit device changes and manage notifications
       for (const updatedDevice of snapshotResult.updated as any[]) {
+        // Mark any DEVICE_ALERT for this device as read if it's closed/replaced
+        if (updatedDevice._action === 'REPLACED_OLD' || updatedDevice._action === 'CLOSED') {
+          await tx.notification.updateMany({
+            where: {
+              type: 'DEVICE_ALERT',
+              relatedEntityType: 'AlatTerpasang',
+              relatedEntityId: updatedDevice.id,
+              isRead: false,
+            },
+            data: {
+              isRead: true,
+              readAt: new Date(),
+            },
+          })
+        }
+
         if (updatedDevice._action === 'REPLACED_OLD') {
           await recordAudit('REPLACE_DEVICE_OLD', 'AlatTerpasang', updatedDevice.id, { status: 'Terpasang' }, { status: 'Dilepas (Ganti Baru)', tanggal_lepas: surveyDate })
         } else if (updatedDevice._action === 'REPLACED_NEW') {
@@ -292,7 +309,7 @@ export async function POST(req: Request) {
         })
 
         // Gunakan device_day dari database, jika tidak ada hitung ulang
-        const hariPasang = activeDevice?.device_day ?? Math.max(1, Math.floor((surveyDate.getTime() - new Date(activeDevice?.tanggal_pasang || surveyDate).getTime()) / 86400000) + 1)
+        const hariPasang = activeDevice?.device_day ?? hitungDeviceDay(activeDevice?.tanggal_pasang ?? null, null)
 
         if (!activeDevice || !shouldTriggerDeviceAlert({ jenisAlat: deviceName, hariPasang, threshold: configuredThreshold })) {
           continue
