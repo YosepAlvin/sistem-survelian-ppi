@@ -10,6 +10,8 @@ export default function SettingsPage() {
       <PageHeader 
         title="Preferences" 
         description="Customize your experience and notification settings."
+        backHref="/"
+        backLabel="Kembali ke Dashboard"
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="glass">
@@ -33,7 +35,7 @@ export default function SettingsPage() {
             <CardDescription>Choose your preferred language for the interface.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-white font-bold">Bahasa Indonesia (Default)</p>
+            <p className="text-slate-900 font-bold">Bahasa Indonesia (Default)</p>
           </CardContent>
         </Card>
       </div>

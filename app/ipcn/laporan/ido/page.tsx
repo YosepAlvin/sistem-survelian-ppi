@@ -62,7 +62,7 @@ export default function LaporanIDOPage() {
     { key: 'skor_risiko', label: 'Skor Risiko', className: 'text-center' },
     { key: 'status_ido', label: 'Status IDO', render: (_: any, row: any) => {
       const ido = row.surveilans_ido?.[0]
-      if (!ido) return <span className="px-2 py-1 bg-slate-800 text-slate-300 rounded text-xs">BELUM DIISI</span>
+      if (!ido) return <span className="px-2 py-1 bg-slate-50 text-slate-700 rounded text-xs">BELUM DIISI</span>
       if (ido.ada_infeksi) return <span className="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs font-bold border border-red-800/50">TERDETEKSI</span>
       return <span className="px-2 py-1 bg-green-900/30 text-green-400 rounded text-xs border border-green-800/50">TIDAK ADA</span>
     }},
@@ -75,9 +75,9 @@ export default function LaporanIDOPage() {
   if (loading) return <div className="p-8"><LoadingSkeleton count={5} rows={4} /></div>
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Laporan Infeksi Daerah Operasi (IDO)"
             description="Pemantauan dan rekapitulasi kejadian IDO pasca operasi"
@@ -89,9 +89,9 @@ export default function LaporanIDOPage() {
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="p-2 rounded bg-slate-800 text-white border border-slate-700"
+                  className="p-2 rounded bg-slate-50 text-slate-900 border border-slate-200"
                 />
-                <Button onClick={handleDownload} disabled={isDownloading} className="bg-green-600 hover:bg-green-700 text-white">
+                <Button onClick={handleDownload} disabled={isDownloading} className="bg-green-600 hover:bg-green-700 text-slate-900">
                   {isDownloading ? 'Generating...' : 'Download Report'}
                 </Button>
               </div>
@@ -100,26 +100,26 @@ export default function LaporanIDOPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6 bg-slate-900/95 border-slate-800">
-            <div className="text-sm font-bold text-slate-400 uppercase">Total Operasi</div>
-            <div className="text-3xl font-bold text-white">{totalOperasi}</div>
+          <Card className="p-6 bg-white/95 border-slate-200">
+            <div className="text-sm font-bold text-slate-600 uppercase">Total Operasi</div>
+            <div className="text-3xl font-bold text-slate-900">{totalOperasi}</div>
           </Card>
-          <Card className="p-6 bg-slate-900/95 border-slate-800">
-            <div className="text-sm font-bold text-slate-400 uppercase">Kejadian IDO</div>
-            <div className="text-3xl font-bold text-white">{totalIDO}</div>
+          <Card className="p-6 bg-white/95 border-slate-200">
+            <div className="text-sm font-bold text-slate-600 uppercase">Kejadian IDO</div>
+            <div className="text-3xl font-bold text-slate-900">{totalIDO}</div>
           </Card>
-          <Card className="p-6 bg-slate-900/95 border-slate-800">
-            <div className="text-sm font-bold text-slate-400 uppercase">Rate IDO (%)</div>
-            <div className="text-3xl font-bold text-white">{rateIDO}%</div>
+          <Card className="p-6 bg-white/95 border-slate-200">
+            <div className="text-sm font-bold text-slate-600 uppercase">Rate IDO (%)</div>
+            <div className="text-3xl font-bold text-slate-900">{rateIDO}%</div>
           </Card>
         </div>
 
-        <Card className="bg-slate-900/95 border-slate-800">
+        <Card className="bg-white/95 border-slate-200">
           <div className="p-6">
             <DataTable 
               columns={columns} 
               data={filteredData} 
-              className="bg-slate-950" 
+              className="bg-white" 
               searchable={true} 
               paginated={true} 
               pageSize={10}

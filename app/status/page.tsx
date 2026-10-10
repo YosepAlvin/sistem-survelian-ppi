@@ -51,7 +51,7 @@ export default function StatusPage() {
 
   const StatusBadge = ({ status, label }: { status: "online" | "offline", label: string }) => {
     const colors = {
-      online: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      online: "text-emerald-700 bg-emerald-500/10 border-emerald-500/20",
       offline: "text-red-400 bg-red-500/10 border-red-500/20"
     }
 
@@ -66,9 +66,9 @@ export default function StatusPage() {
       <div className={`p-4 rounded-xl border ${colors[status]} flex items-center justify-between`}>
         <div className="flex items-center gap-3">
           <Icon className="h-5 w-5" />
-          <span className="font-medium text-white">{label}</span>
+          <span className="font-medium text-slate-900">{label}</span>
         </div>
-        <span className={`text-xs font-bold uppercase ${status === "online" ? "text-emerald-400" : "text-red-400"}`}>
+        <span className={`text-xs font-bold uppercase ${status === "online" ? "text-emerald-700" : "text-red-400"}`}>
           {status === "online" ? "Online" : "Offline"}
         </span>
       </div>
@@ -76,7 +76,7 @@ export default function StatusPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 py-8 px-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -85,17 +85,17 @@ export default function StatusPage() {
             Kembali ke Halaman Utama
           </Link>
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold text-white">Status Sistem</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Status Sistem</h1>
             <button
               onClick={checkStatus}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-300 border border-slate-300 text-slate-900 rounded-xl text-sm transition-all disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </button>
           </div>
-          <p className="text-slate-400">Monitor kondisi sistem secara real-time</p>
+          <p className="text-slate-600">Monitor kondisi sistem secara real-time</p>
           {status?.lastUpdate && (
             <p className="text-xs text-slate-500 mt-1">
               Terakhir diperbarui: {status.lastUpdate}
@@ -107,7 +107,7 @@ export default function StatusPage() {
         <div className="grid gap-4 mb-8">
           {loading ? (
             Array(3).fill(null).map((_, i) => (
-              <div key={i} className="p-4 rounded-xl border border-white/10 bg-white/5 animate-pulse h-16"></div>
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50 animate-pulse h-16"></div>
             ))
           ) : status ? (
             <>
@@ -121,10 +121,10 @@ export default function StatusPage() {
         {/* Info Box */}
         <div className="p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-6 w-6 text-amber-400 mt-0.5" />
+            <AlertTriangle className="h-6 w-6 text-amber-600 mt-0.5" />
             <div>
-              <h3 className="text-white font-medium mb-1">Informasi</h3>
-              <p className="text-sm text-slate-300">
+              <h3 className="text-slate-900 font-medium mb-1">Informasi</h3>
+              <p className="text-sm text-slate-700">
                 Status sistem diperbarui setiap 30 detik. Jika ada indikator offline, silakan periksa koneksi server dan database.
               </p>
             </div>
@@ -134,21 +134,21 @@ export default function StatusPage() {
         {/* Quick Links */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <Link href="/help" className="group">
-            <div className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
-              <h3 className="text-white font-semibold mb-1">Pusat Bantuan</h3>
-              <p className="text-sm text-slate-400">Lihat panduan dan FAQ</p>
+            <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
+              <h3 className="text-slate-900 font-semibold mb-1">Pusat Bantuan</h3>
+              <p className="text-sm text-slate-600">Lihat panduan dan FAQ</p>
             </div>
           </Link>
           <Link href="/auth/login" className="group">
-            <div className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
-              <h3 className="text-white font-semibold mb-1">Login</h3>
-              <p className="text-sm text-slate-400">Masuk ke sistem</p>
+            <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
+              <h3 className="text-slate-900 font-semibold mb-1">Login</h3>
+              <p className="text-sm text-slate-600">Masuk ke sistem</p>
             </div>
           </Link>
           <Link href="/user-guide" className="group">
-            <div className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
-              <h3 className="text-white font-semibold mb-1">User Guide</h3>
-              <p className="text-sm text-slate-400">Lihat panduan lengkap</p>
+            <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all">
+              <h3 className="text-slate-900 font-semibold mb-1">User Guide</h3>
+              <p className="text-sm text-slate-600">Lihat panduan lengkap</p>
             </div>
           </Link>
         </div>

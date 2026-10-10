@@ -45,9 +45,9 @@ export default function PasienPulangPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Pasien yang Sudah Pulang"
             description="Daftar pasien yang sudah selesai perawatan"
@@ -59,7 +59,7 @@ export default function PasienPulangPage() {
           />
         </div>
 
-        <Card className="mt-6 bg-slate-900/95 border-slate-800">
+        <Card className="mt-6 bg-white/95 border-slate-200">
           <CardHeader>
             <CardTitle>Daftar Pasien Pulang</CardTitle>
           </CardHeader>

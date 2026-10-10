@@ -13,6 +13,7 @@ import { Plus } from 'lucide-react'
 import axios from "axios"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { CrudModal } from "@/components/ui/CrudModal"
 
 type OperasiData = {
   id: string;
@@ -43,6 +44,7 @@ export default function OperasiPage() {
   const [pasienList, setPasienList] = useState<PasienData[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [selectedOperasi, setSelectedOperasi] = useState<OperasiData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<OperasiData | null>(null)
@@ -108,9 +110,9 @@ export default function OperasiPage() {
     setIsEditing(false)
   }, [])
 
-  const handleSaveOperasi = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSaveOperasi = useCallback(async () => {
     try {
+      setIsSaving(true)
       if (isEditing && formData.id) {
         await axios.put(`/api/operasi/${formData.id}`, {
           no_rm: formData.no_rm,
@@ -141,6 +143,8 @@ export default function OperasiPage() {
     } catch (error: any) {
       console.error("Error saving operasi:", error)
       showToast({ type: "error", title: "Gagal", message: error.response?.data?.error || error.message })
+    } finally {
+      setIsSaving(false)
     }
   }, [isEditing, formData, resetForm, fetchData, showToast])
 
@@ -202,27 +206,27 @@ export default function OperasiPage() {
   const getBadgeColor = (status: string) => {
     switch (status) {
       case "PENDING":
-        return "bg-yellow-900/30 text-yellow-400 border border-yellow-800/50"
+        return "bg-yellow-50 text-yellow-700 border border-yellow-200"
       case "VERIFIED":
       case "DISETUJUI":
-        return "bg-green-900/30 text-green-400 border border-green-800/50"
+        return "bg-green-50 text-green-700 border border-green-200"
       case "REJECTED":
       case "DITOLAK":
-        return "bg-red-900/30 text-red-400 border border-red-800/50"
+        return "bg-red-50 text-red-700 border border-red-200"
       case "AKTIF":
-        return "bg-orange-900/30 text-orange-400 border border-orange-800/50"
+        return "bg-orange-50 text-orange-700 border border-orange-200"
       case "SELESAI":
-        return "bg-blue-900/30 text-blue-400 border border-blue-800/50"
+        return "bg-blue-50 text-blue-700 border border-blue-200"
       case "BERSIH":
-        return "bg-blue-900/30 text-blue-400 border border-blue-800/50"
+        return "bg-blue-50 text-blue-700 border border-blue-200"
       case "BERSIH_TERCEMAR":
-        return "bg-cyan-900/30 text-cyan-400 border border-cyan-800/50"
+        return "bg-cyan-50 text-cyan-700 border border-cyan-200"
       case "TERCEMAR":
-        return "bg-amber-900/30 text-amber-400 border border-amber-800/50"
+        return "bg-amber-50 text-amber-700 border border-amber-200"
       case "KOTOR":
-        return "bg-red-900/30 text-red-400 border border-red-800/50"
+        return "bg-red-50 text-red-700 border border-red-200"
       default:
-        return "bg-gray-900/30 text-gray-400 border border-gray-800/50"
+        return "bg-slate-100 text-slate-600 border border-slate-200"
     }
   }
 
@@ -244,18 +248,13 @@ export default function OperasiPage() {
         actions={
           <Button 
             onClick={() => {
-              if (showForm) {
-                setShowForm(false)
-                resetForm()
-              } else {
-                resetForm()
-                setShowForm(true)
-              }
+              resetForm()
+              setShowForm(true)
             }}
             className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
           >
             <Plus size={18} />
-            {showForm ? "Batal" : "Tambah Data Operasi"}
+            Tambah Data Operasi
           </Button>
         }
       />
@@ -284,108 +283,92 @@ export default function OperasiPage() {
         />
       </div>
 
-      {/* Form Input */}
-      {showForm && (
-        <Card className="mb-8 border-2 border-purple-800/30">
-          <CardHeader>
-            <CardTitle className="text-purple-300">{isEditing ? "Edit Data Operasi" : "Form Input Operasi Baru"}</CardTitle>
-            <CardDescription>Isi form di bawah untuk {isEditing ? "memperbarui" : "menambah"} data tindakan operasi</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSaveOperasi} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormField label="No. RM Pasien" required>
-                <FormSelect
-                  value={formData.no_rm}
-                  onChange={(e) => handleNoRmChange(e.target.value)}
-                >
-                  <option value="">Pilih Pasien...</option>
-                  {pasienList.map(pasien => (
-                    <option key={pasien.id} value={pasien.no_rm}>
-                      {pasien.no_rm} - {pasien.nama} ({pasien.ruangan})
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormField>
+      {/* CRUD Modal */}
+      <CrudModal
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false)
+          setIsEditing(false)
+          resetForm()
+        }}
+        title={isEditing ? "Edit Data Operasi" : "Form Input Operasi Baru"}
+        loading={isSaving}
+        onSubmit={handleSaveOperasi}
+        submitLabel={isEditing ? "Perbarui Data Operasi" : "Simpan Data Operasi"}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <FormField label="No. RM Pasien" required>
+            <FormSelect
+              value={formData.no_rm}
+              onChange={(e) => handleNoRmChange(e.target.value)}
+            >
+              <option value="">Pilih Pasien...</option>
+              {pasienList.map(pasien => (
+                <option key={pasien.id} value={pasien.no_rm}>
+                  {pasien.no_rm} - {pasien.nama} ({pasien.ruangan})
+                </option>
+              ))}
+            </FormSelect>
+          </FormField>
 
-              <FormField label="Nama Pasien" required>
-                <FormInput
-                  type="text"
-                  placeholder="Nama Pasien"
-                  value={formData.pasien}
-                  onChange={e => setFormData({...formData, pasien: e.target.value})}
-                />
-              </FormField>
+          <FormField label="Nama Pasien" required>
+            <FormInput
+              type="text"
+              placeholder="Nama Pasien"
+              value={formData.pasien}
+              onChange={e => setFormData({...formData, pasien: e.target.value})}
+            />
+          </FormField>
 
-              <FormField label="Tanggal Operasi" required>
-                <FormInput
-                  type="date"
-                  value={formData.tanggal}
-                  onChange={e => setFormData({...formData, tanggal: e.target.value})}
-                />
-              </FormField>
+          <FormField label="Tanggal Operasi" required>
+            <FormInput
+              type="date"
+              value={formData.tanggal}
+              onChange={e => setFormData({...formData, tanggal: e.target.value})}
+            />
+          </FormField>
 
-              <FormField label="Diagnosa Operasi" required>
-                <FormInput
-                  type="text"
-                  placeholder="Contoh: Appendicitis"
-                  value={formData.diagnosa}
-                  onChange={e => setFormData({...formData, diagnosa: e.target.value})}
-                />
-              </FormField>
+          <FormField label="Diagnosa Operasi" required>
+            <FormInput
+              type="text"
+              placeholder="Contoh: Appendicitis"
+              value={formData.diagnosa}
+              onChange={e => setFormData({...formData, diagnosa: e.target.value})}
+            />
+          </FormField>
 
-              <FormField label="Jenis Operasi">
-                <FormSelect value={formData.jenis} onChange={e => setFormData({...formData, jenis: e.target.value})}>
-                  <option value="BERSIH">Bersih (B)</option>
-                  <option value="BERSIH_TERCEMAR">Bersih Tercemar (BT)</option>
-                  <option value="TERCEMAR">Tercemar (T)</option>
-                  <option value="KOTOR">Kotor (K)</option>
-                </FormSelect>
-              </FormField>
+          <FormField label="Jenis Operasi">
+            <FormSelect value={formData.jenis} onChange={e => setFormData({...formData, jenis: e.target.value})}>
+              <option value="BERSIH">Bersih (B)</option>
+              <option value="BERSIH_TERCEMAR">Bersih Tercemar (BT)</option>
+              <option value="TERCEMAR">Tercemar (T)</option>
+              <option value="KOTOR">Kotor (K)</option>
+            </FormSelect>
+          </FormField>
 
-              <FormField label="ASA Score">
-                <FormSelect value={formData.asa} onChange={e => setFormData({...formData, asa: e.target.value})}>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </FormSelect>
-              </FormField>
+          <FormField label="ASA Score">
+            <FormSelect value={formData.asa} onChange={e => setFormData({...formData, asa: e.target.value})}>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </FormSelect>
+          </FormField>
 
-              <FormField label="Lama Operasi (T-Time)">
-                <div className="flex items-center gap-2">
-                  <FormInput
-                    type="number"
-                    step="0.1"
-                    value={String(formData.t_time)}
-                    onChange={e => setFormData({...formData, t_time: parseFloat(e.target.value) || 0})}
-                  />
-                  <span className="text-sm text-gray-400">jam</span>
-                </div>
-              </FormField>
-
-              <div className="md:col-span-2 lg:col-span-3 pt-4 flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowForm(false)
-                    resetForm()
-                  }}
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 flex-1"
-                >
-                  {isEditing ? "Perbarui Data Operasi" : "Simpan Data Operasi"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+          <FormField label="Lama Operasi (T-Time)">
+            <div className="flex items-center gap-2">
+              <FormInput
+                type="number"
+                step="0.1"
+                value={String(formData.t_time)}
+                onChange={e => setFormData({...formData, t_time: parseFloat(e.target.value) || 0})}
+              />
+              <span className="text-sm text-slate-600">jam</span>
+            </div>
+          </FormField>
+        </div>
+      </CrudModal>
       
       {/* Data Table */}
       {loading ? (
@@ -431,7 +414,7 @@ export default function OperasiPage() {
                   key: 'case_status' as any,
                   label: 'Status Kasus IDO',
                   render: (value: string) => (
-                    <span className={`px-2 py-1 rounded text-xs font-semibold border ${value ? getBadgeColor(value) : "bg-gray-900/30 text-gray-400 border-gray-800/50"}`}>
+                    <span className={`px-2 py-1 rounded text-xs font-semibold border ${value ? getBadgeColor(value) : "bg-slate-100 text-slate-600 border-slate-200"}`}>
                       {value || "-"}
                     </span>
                   )
@@ -443,13 +426,13 @@ export default function OperasiPage() {
                     <div className="flex gap-2 flex-wrap">
                       <button 
                         onClick={() => setSelectedOperasi(row)}
-                        className="text-purple-400 hover:text-purple-300 hover:font-medium text-sm transition-colors"
+                        className="text-purple-700 hover:text-purple-800 hover:font-medium text-sm transition-colors"
                       >
                         Detail
                       </button>
                       <button
                         onClick={() => handleEdit(row)}
-                        className="text-blue-400 hover:text-blue-300 hover:font-medium text-sm transition-colors"
+                        className="text-blue-600 hover:text-blue-800 hover:font-medium text-sm transition-colors"
                       >
                         Edit Operasi
                       </button>
@@ -457,14 +440,14 @@ export default function OperasiPage() {
                         <>
                           <Link 
                             href={`/ipcln/operasi/${row.id}/ido`}
-                            className="text-green-400 hover:text-green-300 hover:font-medium text-sm transition-colors"
+                            className="text-green-600 hover:text-green-800 hover:font-medium text-sm transition-colors"
                           >
                             Edit IDO
                           </Link>
                           {row.case_status === 'AKTIF' && (
                             <button
                               onClick={() => handleCloseCase(row.ido_id!)}
-                              className="text-blue-400 hover:text-blue-300 hover:font-medium text-sm transition-colors"
+                              className="text-blue-600 hover:text-blue-800 hover:font-medium text-sm transition-colors"
                             >
                               Tandai Selesai
                             </button>
@@ -473,14 +456,14 @@ export default function OperasiPage() {
                       ) : (
                         <Link 
                           href={`/ipcln/operasi/${row.id}/ido`}
-                          className="text-orange-400 hover:text-orange-300 hover:font-medium text-sm transition-colors"
+                          className="text-orange-600 hover:text-orange-800 hover:font-medium text-sm transition-colors"
                         >
                           Lapor IDO
                         </Link>
                       )}
                       <button 
                         onClick={() => handleDelete(row.id)}
-                        className="text-red-400 hover:text-red-300 hover:font-medium text-sm transition-colors"
+                        className="text-red-600 hover:text-red-800 hover:font-medium text-sm transition-colors"
                       >
                         Hapus
                       </button>
@@ -499,50 +482,50 @@ export default function OperasiPage() {
       {selectedOperasi && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-lg w-full overflow-hidden">
-            <CardHeader className="bg-purple-600 text-white p-4">
+            <CardHeader className="bg-purple-50 text-purple-700 p-4 border-b border-purple-200">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">Detail Data Operasi</CardTitle>
-                <button onClick={() => setSelectedOperasi(null)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+                <CardTitle className="text-purple-700">Detail Data Operasi</CardTitle>
+                <button onClick={() => setSelectedOperasi(null)} className="text-purple-700 hover:text-purple-600 text-2xl">&times;</button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 p-6">
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">Tgl Operasi</span>
-                <span className="col-span-2 font-bold">{selectedOperasi.tanggal}</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">Tgl Operasi</span>
+                <span className="col-span-2 font-bold text-slate-900">{selectedOperasi.tanggal}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">Pasien</span>
-                <span className="col-span-2 font-bold">{selectedOperasi.pasien} (RM: {selectedOperasi.no_rm})</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">Pasien</span>
+                <span className="col-span-2 font-bold text-slate-900">{selectedOperasi.pasien} (RM: {selectedOperasi.no_rm})</span>
               </div>
               {selectedOperasi.ruangan && (
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                  <span className="text-gray-400 font-semibold">Ruangan</span>
-                  <span className="col-span-2">{selectedOperasi.ruangan}</span>
+                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                  <span className="text-slate-600 font-semibold">Ruangan</span>
+                  <span className="col-span-2 text-slate-900">{selectedOperasi.ruangan}</span>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">Diagnosa</span>
-                <span className="col-span-2">{selectedOperasi.diagnosa}</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">Diagnosa</span>
+                <span className="col-span-2 text-slate-900">{selectedOperasi.diagnosa}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">Jenis Operasi</span>
-                <span className="col-span-2">{selectedOperasi.jenis}</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">Jenis Operasi</span>
+                <span className="col-span-2 text-slate-900">{selectedOperasi.jenis}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">ASA Score</span>
-                <span className="col-span-2">{selectedOperasi.asa}</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">ASA Score</span>
+                <span className="col-span-2 text-slate-900">{selectedOperasi.asa}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm border-b border-gray-800 pb-2">
-                <span className="text-gray-400 font-semibold">Lama (T-Time)</span>
-                <span className="col-span-2">{selectedOperasi.t_time} Jam</span>
+              <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-2">
+                <span className="text-slate-600 font-semibold">Lama (T-Time)</span>
+                <span className="col-span-2 text-slate-900">{selectedOperasi.t_time} Jam</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
-                <span className="text-gray-400 font-semibold">Skor Risiko</span>
-                <span className="col-span-2 font-bold text-red-400">{selectedOperasi.skor_risiko}</span>
+                <span className="text-slate-600 font-semibold">Skor Risiko</span>
+                <span className="col-span-2 font-bold text-red-600">{selectedOperasi.skor_risiko}</span>
               </div>
             </CardContent>
-            <div className="bg-gray-900/30 p-4 flex justify-end border-t border-gray-800">
-              <Button onClick={() => setSelectedOperasi(null)} className="bg-gray-600">Tutup</Button>
+            <div className="bg-slate-50 p-4 flex justify-end border-t border-slate-200">
+              <Button onClick={() => setSelectedOperasi(null)} className="bg-slate-600">Tutup</Button>
             </div>
           </Card>
         </div>

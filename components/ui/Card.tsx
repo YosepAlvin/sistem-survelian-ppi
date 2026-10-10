@@ -15,11 +15,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         // Light theme (default)
         "bg-white border-slate-200 text-slate-950 shadow-sm",
         // Dark theme & Variants
-        variant === 'default' && "dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-50",
-        variant === 'glass' && "dark:bg-slate-900/40 dark:backdrop-blur-xl dark:border-white/5",
-        variant === 'premium' && "dark:bg-[#172033] dark:border-white/10 dark:shadow-2xl",
+        variant === 'default' && "dark:bg-slate-50 dark:border-slate-200 dark:text-slate-50",
+        variant === 'glass' && "dark:bg-white/40 dark:backdrop-blur-xl dark:border-slate-200",
+        variant === 'premium' && "dark:bg-white dark:border-slate-200 dark:shadow-2xl",
         
-        hoverable && "hover:shadow-lg dark:hover:shadow-blue-500/5 hover:border-slate-300 dark:hover:border-slate-700 hover:translate-y-[-4px]",
+        hoverable && "hover:shadow-lg dark:hover:shadow-blue-500/5 hover:border-slate-300 dark:hover:border-slate-200 hover:translate-y-[-4px]",
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ const CardTitle = React.forwardRef<
   <h2
     ref={ref as any}
     className={cn(
-      "text-lg font-bold leading-none tracking-tight dark:text-white text-slate-900",
+      "text-lg font-bold leading-none tracking-tight dark:text-slate-900 text-slate-900",
       className
     )}
     {...props}
@@ -61,7 +61,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm dark:text-slate-400 text-slate-500 font-medium", className)}
+    className={cn("text-sm dark:text-slate-600 text-slate-500 font-medium", className)}
     {...props}
   />
 ))
@@ -81,7 +81,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-6 pt-0 border-t border-slate-100 dark:border-slate-800/50 mt-4", className)}
+    className={cn("flex items-center p-6 pt-0 border-t border-slate-100 dark:border-slate-200/50 mt-4", className)}
     {...props}
   />
 ))

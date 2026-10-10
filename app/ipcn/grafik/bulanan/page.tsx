@@ -20,9 +20,9 @@ const data = [
 
 export default function TrenInfeksiPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Tren Infeksi Rumah Sakit"
             description="Visualisasi data infeksi selama 6 bulan terakhir"
@@ -31,9 +31,9 @@ export default function TrenInfeksiPage() {
           />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <Card className="bg-slate-900/95 border-slate-800">
+          <Card className="bg-white/95 border-slate-200">
             <div className="p-6">
-              <h3 className="text-lg font-bold mb-6 text-white">Perbandingan Jenis Infeksi (Bar Chart)</h3>
+              <h3 className="text-lg font-bold mb-6 text-slate-900">Perbandingan Jenis Infeksi (Bar Chart)</h3>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data}>
@@ -52,9 +52,9 @@ export default function TrenInfeksiPage() {
             </div>
           </Card>
 
-          <Card className="bg-slate-900/95 border-slate-800">
+          <Card className="bg-white/95 border-slate-200">
             <div className="p-6">
-              <h3 className="text-lg font-bold mb-6 text-white">Tren Kejadian Infeksi (Line Chart)</h3>
+              <h3 className="text-lg font-bold mb-6 text-slate-900">Tren Kejadian Infeksi (Line Chart)</h3>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data}>
@@ -74,10 +74,10 @@ export default function TrenInfeksiPage() {
           </Card>
         </div>
 
-        <Card className="bg-slate-900/95 border-slate-800">
-          <div className="p-6 bg-slate-950/80 rounded">
-            <h3 className="font-bold text-white mb-4">Analisis Tren:</h3>
-            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2">
+        <Card className="bg-white/95 border-slate-200">
+          <div className="p-6 bg-white/80 rounded">
+            <h3 className="font-bold text-slate-900 mb-4">Analisis Tren:</h3>
+            <ul className="list-disc list-inside text-sm text-slate-700 space-y-2">
               <li>Kejadian Phlebitis (PLB) merupakan yang tertinggi namun menunjukkan tren menurun di bulan April.</li>
               <li>ISK cenderung fluktuatif dengan puncak di bulan Maret.</li>
               <li>VAP menunjukkan kenaikan di bulan April, perlu evaluasi prosedur suction dan oral hygiene.</li>

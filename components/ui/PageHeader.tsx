@@ -21,7 +21,7 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
           {/* Back Button & Breadcrumbs Row */}
           <div className="flex items-center gap-4">
             {backHref && (
-              <Link href={backHref} className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs font-bold">
+              <Link href={backHref} className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all text-xs font-bold">
                 <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
                 {backLabel || 'Back'}
               </Link>
@@ -36,10 +36,10 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
                         {crumb.label}
                       </Link>
                     ) : (
-                      <span className="text-slate-300">{crumb.label}</span>
+                      <span className="text-slate-700">{crumb.label}</span>
                     )}
                     {index < breadcrumbs.length - 1 && (
-                      <span className="opacity-30">/</span>
+                      <span className="opacity-50">/</span>
                     )}
                   </React.Fragment>
                 ))}
@@ -48,11 +48,11 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-white text-4xl md:text-5xl font-black tracking-tighter">
+            <h1 className="text-slate-900 text-4xl md:text-5xl font-black tracking-tighter">
               {title}
             </h1>
             {description && (
-              <p className="text-slate-400 text-lg font-medium max-w-2xl">
+              <p className="text-slate-600 text-lg font-medium max-w-2xl">
                 {description}
               </p>
             )}
@@ -68,7 +68,7 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
       </div>
 
       {/* Decorative Line */}
-      <div className="h-px w-full bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+      <div className="h-px w-full bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
     </div>
   )
 )

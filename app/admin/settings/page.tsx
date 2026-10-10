@@ -10,18 +10,20 @@ export default function AdminSettingsPage() {
       <PageHeader 
         title="System Settings" 
         description="Global configuration and administrative controls."
+        backHref="/admin/dashboard"
+        backLabel="Kembali ke Admin Dashboard"
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="premium">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Shield className="text-white" size={20} />
+              <Shield className="text-slate-900" size={20} />
               <CardTitle>Access Control</CardTitle>
             </div>
             <CardDescription>Manage global roles and permissions.</CardDescription>
           </CardHeader>
           <CardContent>
-             <p className="text-slate-400 text-sm font-medium italic">RBAC configuration is currently locked.</p>
+             <p className="text-slate-600 text-sm font-medium italic">RBAC configuration is currently locked.</p>
           </CardContent>
         </Card>
         <Card variant="glass">
@@ -33,9 +35,9 @@ export default function AdminSettingsPage() {
             <CardDescription>Monitor database health and perform backups.</CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-sm font-bold text-white">SQLite Engine</span>
-                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase">Healthy</span>
+             <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <span className="text-sm font-bold text-slate-900">SQLite Engine</span>
+                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-[10px] font-black uppercase">Healthy</span>
              </div>
           </CardContent>
         </Card>

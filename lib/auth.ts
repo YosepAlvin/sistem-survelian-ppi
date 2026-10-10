@@ -43,6 +43,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             name: user.name,
             role: user.role.name.toUpperCase(),
             ruanganId: user.ruanganId,
+            ruangan: user.ruangan?.nama,
+            profileImage: user.profileImage,
+            createdAt: user.createdAt.toISOString(),
           }
         } catch (error) {
           return null

@@ -196,3 +196,101 @@ export function getInitials(name: string): string {
     .toUpperCase()
     .slice(0, 2)
 }
+
+/**
+ * Daftar gelar profesi Nakes yang dikenali (tambah jika ada)
+ * Case-insensitive match, titik di akhir optional.
+ */
+const PROFESSIONAL_TITLES: readonly string[] = [
+  "Ns.", "Ns", "Perawat", "Bidan",
+  "dr.", "dr", "Dr.", "Dr", "Dokter",
+  "drg.", "drg", "Dokter Gigi",
+  "apt.", "apt", "Apoteker", "Farmasis",
+  "Prof.", "Prof", "Professor",
+  "Ir.", "Ir", "Insinyur",
+  "Sp.", "Sp", "Subsp.",
+  "M.Kes.", "M.Kes", "S.Kep.", "S.Kep", "S.Gz.", "S.Gz",
+  "HJ.", "Hj.", "Hj", "H.", "H",
+  "Drs.", "Drs", "Dra.", "Dra",
+  "M.Si.", "M.Si", "S.Si.", "S.Si",
+]
+
+/**
+ * Helper reusable untuk menampilkan nama user di UI dashboard.
+ * Rules:
+ *  1. Pertahankan gelar profesi (Ns., dr., drg., apt., Hj./Hj. dll)
+ *  2. Tampilkan gelar + nama depan
+ *  3. Hilangkan info tambahan di dalam tanda kurung (misal: "(IPCLN Mawar)")
+ *  4. Tidak mengubah data asli, hanya format untuk tampilan
+ *  5. Jika tidak punya gelar: cukup nama depan
+ *  6. null/undefined/empty: return "User"
+ *
+ * Contoh:
+ *   "Ns. Sinta Mawar (IPCLN Mawar)" → "Ns. Sinta"
+ *   "dr. Andi Saputra"             → "dr. Andi"
+ *   "drg. Budi Santoso"            → "drg. Budi"
+ *   "apt. Rina Kartika"            → "apt. Rina"
+ *   "Sinta Mawar"                  → "Sinta"
+ *   null / ""                      → "User"
+ */
+export function getDisplayName(fullName: string | null | undefined): string {
+  if (!fullName) return "User"
+
+  // 1. Bersihkan info tambahan di kurung: "(IPCLN Mawar)", "[Unit X]"
+  let cleaned = String(fullName)
+    .replace(/\(.*?\)/g, " ")
+    .replace(/\[.*?\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!cleaned) return "User"
+
+  // 2. Pecah token dan pisahkan mana gelar mana nama
+  const tokens = cleaned.split(" ")
+  const titles: string[] = []
+  const firstNames: string[] = []
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (!token) continue
+
+    // Cocokkan token apakah termasuk gelar (case-insensitive, optional trailing dot)
+    const normalized = token.replace(/\.$/, "") + "."
+    const isTitle = PROFESSIONAL_TITLES.some(
+      (t) =>
+        t.toLowerCase() === token.toLowerCase() ||
+        t.replace(/\.$/, "").toLowerCase() === normalized.replace(/\.$/, "").toLowerCase()
+    )
+
+    if (isTitle) {
+      // Pastikan format titik konsisten: "Ns" → "Ns.", "dr" → "dr."
+      const formattedToken = /\.$/.test(token) ? token : token + "."
+      titles.push(formattedToken)
+    } else {
+      firstNames.push(token)
+      break // hanya ambil nama pertama setelah gelar
+    }
+  }
+
+  // 3. Fallback: kalau tidak ada nama pertama (hanya ada gelar atau token aneh)
+  if (firstNames.length === 0) {
+    // Kalau ada token pertama non-gelar, pakai itu
+    const firstNonTitle = tokens.find((t) => {
+      const normalized = t.replace(/\.$/, "") + "."
+      return t && !PROFESSIONAL_TITLES.some(
+        (pt) =>
+          pt.toLowerCase() === t.toLowerCase() ||
+          pt.replace(/\.$/, "").toLowerCase() === normalized.replace(/\.$/, "").toLowerCase()
+      )
+    })
+    if (firstNonTitle) firstNames.push(firstNonTitle)
+  }
+
+  const titlePart = titles.length > 0 ? titles.join(" ") : ""
+  const namePart = firstNames.length > 0 ? firstNames.join(" ").trim() : ""
+
+  // 4. Gabungkan
+  const result = [titlePart, namePart].filter(Boolean).join(" ").trim()
+
+  return result || "User"
+}

@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { Plus } from 'lucide-react'
 import axios from "axios"
+import { CrudModal } from "@/components/ui/CrudModal"
 
 type InfeksiReport = {
   id: string;
@@ -29,6 +30,7 @@ export default function InfeksiPage() {
   const [reports, setReports] = useState<InfeksiReport[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [selectedReport, setSelectedReport] = useState<InfeksiReport | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [reportToDelete, setReportToDelete] = useState<string | null>(null)
@@ -67,9 +69,9 @@ export default function InfeksiPage() {
     fetchReports()
   }, [fetchReports])
 
-  const handleReportInfeksi = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleReportInfeksi = async () => {
     try {
+      setIsSaving(true)
       // For simplicity, we use the surveilans-harian API which handles patient creation too
       await axios.post("/api/surveilans-harian", {
         ...formData,
@@ -97,6 +99,8 @@ export default function InfeksiPage() {
         title: 'Gagal Melapor',
         message: err.response?.data?.error || err.message
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -125,139 +129,138 @@ export default function InfeksiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Laporan Kejadian Infeksi"
             description="Input dan pantau kejadian infeksi untuk verifikasi oleh IPCN"
             actions={
-              <Button 
-                onClick={() => setShowForm(!showForm)}
-                className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2 text-white"
-              >
-                <Plus size={18} />
-                {showForm ? "Batal" : "Lapor Infeksi Baru"}
-              </Button>
-            }
+          <Button 
+            onClick={() => {
+              setShowForm(true)
+            }}
+            className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2 text-slate-900"
+          >
+            <Plus size={18} />
+            Lapor Infeksi Baru
+          </Button>
+        }
           />
 
           {/* Modal Detail Laporan Infeksi */}
           {selectedReport && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-              <Card className="max-w-lg w-full overflow-hidden animate-slide-down bg-slate-900 border-slate-800">
-                <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4">
+              <Card className="max-w-lg w-full overflow-hidden animate-slide-down bg-white border-slate-200">
+                <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-slate-900 p-4">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-white">Detail Laporan Infeksi</CardTitle>
-                    <button onClick={() => setSelectedReport(null)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+                    <CardTitle className="text-slate-900">Detail Laporan Infeksi</CardTitle>
+                    <button onClick={() => setSelectedReport(null)} className="text-slate-900 hover:text-gray-200 text-2xl">&times;</button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
-                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
                     <span className="text-slate-500 font-semibold">Tgl Lapor</span>
-                    <span className="col-span-2 text-white">{selectedReport.tanggal}</span>
+                    <span className="col-span-2 text-slate-900">{selectedReport.tanggal}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
                     <span className="text-slate-500 font-semibold">Pasien</span>
-                    <span className="col-span-2 font-bold text-white">{selectedReport.pasien} (RM: {selectedReport.no_rm})</span>
+                    <span className="col-span-2 font-bold text-slate-900">{selectedReport.pasien} (RM: {selectedReport.no_rm})</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
                     <span className="text-slate-500 font-semibold">Jenis Infeksi</span>
-                    <span className="col-span-2 text-purple-400 font-bold">{selectedReport.jenis_infeksi}</span>
+                    <span className="col-span-2 text-purple-600 font-bold">{selectedReport.jenis_infeksi}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
                     <span className="text-slate-500 font-semibold">Hari Ke-</span>
-                    <span className="col-span-2 text-white">{selectedReport.hari_ke}</span>
+                    <span className="col-span-2 text-slate-900">{selectedReport.hari_ke}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
                     <span className="text-slate-500 font-semibold">Status</span>
                     <span className={`col-span-2 font-bold ${
-                      selectedReport.status === 'MENUNGGU VERIFIKASI' ? 'text-amber-400' :
-                      selectedReport.status === 'TERVERIFIKASI' ? 'text-emerald-400' : 'text-rose-400'
+                      selectedReport.status === 'MENUNGGU VERIFIKASI' ? 'text-amber-600' :
+                      selectedReport.status === 'TERVERIFIKASI' ? 'text-emerald-700' : 'text-rose-600'
                     }`}>{selectedReport.status}</span>
                   </div>
                   <div className="space-y-1">
                     <span className="text-slate-500 font-semibold text-sm">Catatan / Keterangan:</span>
-                    <p className="p-3 bg-slate-950 rounded border border-slate-800 text-sm italic text-slate-300">
+                    <p className="p-3 bg-white rounded border border-slate-200 text-sm italic text-slate-700">
                       {selectedReport.catatan || "Tidak ada catatan."}
                     </p>
                   </div>
                 </CardContent>
-                <div className="bg-slate-900 p-4 flex justify-end border-t border-slate-800">
-                  <Button onClick={() => setSelectedReport(null)} className="bg-slate-700 hover:bg-slate-600 text-white">Tutup</Button>
+                <div className="bg-white p-4 flex justify-end border-t border-slate-200">
+                  <Button onClick={() => setSelectedReport(null)} className="bg-slate-700 hover:bg-slate-600 text-slate-900">Tutup</Button>
                 </div>
               </Card>
             </div>
           )}
 
-          {/* Form Input */}
-          {showForm && (
-            <Card className="mb-8 border border-purple-800 bg-purple-950/30 mt-6">
-              <CardHeader>
-                <CardTitle className="text-white">Form Laporan Infeksi</CardTitle>
-                <CardDescription className="text-purple-300">Isi form di bawah untuk melaporkan kejadian infeksi</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleReportInfeksi} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="No. RM Pasien" required>
-                    <FormInput type="text" placeholder="Contoh: 12-34-56" value={formData.no_rm} onChange={e => setFormData({...formData, no_rm: e.target.value})} className="bg-slate-950 border-slate-700 text-white" />
-                  </FormField>
+          {/* CRUD Modal */}
+          <CrudModal
+            isOpen={showForm}
+            onClose={() => {
+              setShowForm(false)
+            }}
+            title="Form Laporan Infeksi"
+            loading={isSaving}
+            onSubmit={handleReportInfeksi}
+            submitLabel="Kirim Laporan ke IPCN"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="No. RM Pasien" required>
+                <FormInput type="text" placeholder="Contoh: 12-34-56" value={formData.no_rm} onChange={e => setFormData({...formData, no_rm: e.target.value})} className="bg-white border-slate-200 text-slate-900" />
+              </FormField>
 
-                  <FormField label="Nama Pasien" required>
-                    <FormInput type="text" placeholder="Nama Pasien" value={formData.pasien} onChange={e => setFormData({...formData, pasien: e.target.value})} className="bg-slate-950 border-slate-700 text-white" />
-                  </FormField>
+              <FormField label="Nama Pasien" required>
+                <FormInput type="text" placeholder="Nama Pasien" value={formData.pasien} onChange={e => setFormData({...formData, pasien: e.target.value})} className="bg-white border-slate-200 text-slate-900" />
+              </FormField>
 
-                  <FormField label="Jenis Infeksi">
-                    <FormSelect value={formData.jenis_infeksi} onChange={e => setFormData({...formData, jenis_infeksi: e.target.value})} className="bg-slate-950 border-slate-700 text-white">
-                      <option value="PHLEBITIS">Phlebitis</option>
-                      <option value="ISK">ISK (Infeksi Saluran Kemih)</option>
-                      <option value="HAP">HAP (Hospital Acquired Pneumonia)</option>
-                      <option value="VAP">VAP (Ventilator Associated Pneumonia)</option>
-                      <option value="IADP">IADP (Infeksi Aliran Darah Primer)</option>
-                      <option value="DEKUBITUS">Dekubitus</option>
-                    </FormSelect>
-                  </FormField>
+              <FormField label="Jenis Infeksi">
+                <FormSelect value={formData.jenis_infeksi} onChange={e => setFormData({...formData, jenis_infeksi: e.target.value})} className="bg-white border-slate-200 text-slate-900">
+                  <option value="PHLEBITIS">Phlebitis</option>
+                  <option value="ISK">ISK (Infeksi Saluran Kemih)</option>
+                  <option value="HAP">HAP (Hospital Acquired Pneumonia)</option>
+                  <option value="VAP">VAP (Ventilator Associated Pneumonia)</option>
+                  <option value="IADP">IADP (Infeksi Aliran Darah Primer)</option>
+                  <option value="DEKUBITUS">Dekubitus</option>
+                </FormSelect>
+              </FormField>
 
-                  <FormField label="Tanggal Kejadian" required>
-                    <FormInput type="date" value={formData.tanggal} onChange={e => setFormData({...formData, tanggal: e.target.value})} className="bg-slate-950 border-slate-700 text-white" />
-                  </FormField>
+              <FormField label="Tanggal Kejadian" required>
+                <FormInput type="date" value={formData.tanggal} onChange={e => setFormData({...formData, tanggal: e.target.value})} className="bg-white border-slate-200 text-slate-900" />
+              </FormField>
 
-                  <FormField label="Infeksi Hari Ke-">
-                    <FormInput type="number" placeholder="Contoh: 3" value={String(formData.hari_ke)} onChange={e => setFormData({...formData, hari_ke: parseInt(e.target.value) || 0})} className="bg-slate-950 border-slate-700 text-white" />
-                  </FormField>
+              <FormField label="Infeksi Hari Ke-">
+                <FormInput type="number" placeholder="Contoh: 3" value={String(formData.hari_ke)} onChange={e => setFormData({...formData, hari_ke: parseInt(e.target.value) || 0})} className="bg-white border-slate-200 text-slate-900" />
+              </FormField>
 
-                  <div className="md:col-span-2">
-                    <FormField label="Catatan / Hasil Kultur">
-                      <FormTextarea rows={3} placeholder="Masukkan hasil laboratorium atau catatan klinis..." value={formData.catatan} onChange={e => setFormData({...formData, catatan: e.target.value})} className="bg-slate-950 border-slate-700 text-white" />
-                    </FormField>
-                  </div>
-
-                  <div className="md:col-span-2 pt-4">
-                    <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">Kirim Laporan ke IPCN</Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+              <div className="md:col-span-2">
+                <FormField label="Catatan / Hasil Kultur">
+                  <FormTextarea rows={3} placeholder="Masukkan hasil laboratorium atau catatan klinis..." value={formData.catatan} onChange={e => setFormData({...formData, catatan: e.target.value})} className="bg-white border-slate-200 text-slate-900" />
+                </FormField>
+              </div>
+            </div>
+          </CrudModal>
           
           {/* Data Table */}
           {loading ? (
             <LoadingSkeleton count={1} rows={5} />
           ) : (
-            <Card className="mt-6 border-slate-800 bg-slate-900/95">
+            <Card className="mt-6 border-slate-200 bg-white/95">
               <CardHeader>
-                <CardTitle className="text-white">Riwayat Laporan Infeksi</CardTitle>
+                <CardTitle className="text-slate-900">Riwayat Laporan Infeksi</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <DataTable
                   columns={[
-                    { key: 'tanggal' as any, label: 'Tgl Lapor', sortable: true, className: 'text-slate-300' },
+                    { key: 'tanggal' as any, label: 'Tgl Lapor', sortable: true, className: 'text-slate-700' },
                     { 
                       key: 'pasien' as any, 
                       label: 'Pasien',
                       render: (_, row) => (
                         <div>
-                          <div className="font-bold text-slate-100">{row.pasien}</div>
+                          <div className="font-bold text-slate-900">{row.pasien}</div>
                           <div className="text-xs text-slate-500">RM: {row.no_rm}</div>
                         </div>
                       )
@@ -266,18 +269,18 @@ export default function InfeksiPage() {
                       key: 'jenis_infeksi' as any, 
                       label: 'Jenis Infeksi',
                       render: (value) => (
-                        <span className="px-2 py-1 bg-purple-900/30 text-purple-400 border border-purple-500/20 rounded text-xs font-bold uppercase">{value}</span>
+                        <span className="px-2 py-1 bg-purple-900/30 text-purple-600 border border-purple-500/20 rounded text-xs font-bold uppercase">{value}</span>
                       )
                     },
-                    { key: 'hari_ke' as any, label: 'Hari Ke', className: 'text-center text-slate-300' },
+                    { key: 'hari_ke' as any, label: 'Hari Ke', className: 'text-center text-slate-700' },
                     { 
                       key: 'status' as any, 
                       label: 'Status',
                       render: (value) => (
                         <span className={`px-2 py-1 rounded text-xs font-bold ${
-                          value === 'MENUNGGU VERIFIKASI' ? 'bg-amber-900/30 text-amber-400' :
-                          value === 'TERVERIFIKASI' ? 'bg-emerald-900/30 text-emerald-400' :
-                          'bg-rose-900/30 text-rose-400'
+                          value === 'MENUNGGU VERIFIKASI' ? 'bg-amber-900/30 text-amber-600' :
+                          value === 'TERVERIFIKASI' ? 'bg-emerald-900/30 text-emerald-700' :
+                          'bg-rose-900/30 text-rose-600'
                         }`}>
                           {value}
                         </span>
@@ -290,14 +293,14 @@ export default function InfeksiPage() {
                         <div className="flex gap-2">
                           <button 
                             onClick={() => setSelectedReport(row)}
-                            className="text-purple-400 hover:text-white font-medium text-sm transition-colors"
+                            className="text-purple-600 hover:text-slate-900 font-medium text-sm transition-colors"
                           >
                             Detail
                           </button>
                           {row.status === 'MENUNGGU VERIFIKASI' && (
                             <button 
                               onClick={() => setReportToDelete(row.id)}
-                              className="text-rose-400 hover:text-white font-medium text-sm transition-colors"
+                              className="text-rose-600 hover:text-slate-900 font-medium text-sm transition-colors"
                             >
                               Hapus
                             </button>

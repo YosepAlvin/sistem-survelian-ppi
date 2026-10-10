@@ -16,6 +16,7 @@ import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
 
 import { exportToExcel } from "@/lib/excel-export"
+import { getDisplayName } from "@/lib/utils"
 
 export default function IPCLNDashboard() {
   const { data: session } = useSession()
@@ -64,7 +65,7 @@ export default function IPCLNDashboard() {
     {
       title: "Patient Registry",
       desc: "Register new patients & inpatient admissions.",
-      icon: <Users className="text-purple-400" />,
+      icon: <Users className="text-purple-600" />,
       href: "/ipcln/pasien",
       color: "purple",
       btnText: "New Patient"
@@ -72,7 +73,7 @@ export default function IPCLNDashboard() {
     {
       title: "Daily Surveillance",
       desc: "Input daily PPI surveillance data per patient.",
-      icon: <ClipboardCheck className="text-purple-400" />,
+      icon: <ClipboardCheck className="text-purple-600" />,
       href: "/ipcln/surveilans-harian",
       color: "purple",
       btnText: "Input Data"
@@ -80,7 +81,7 @@ export default function IPCLNDashboard() {
     {
       title: "Catatan Operasi & IDO",
       desc: "Monitor surgical site infections (IDO).",
-      icon: <Activity className="text-purple-400" />,
+      icon: <Activity className="text-purple-600" />,
       href: "/ipcln/operasi",
       color: "purple",
       btnText: "Buka Halaman"
@@ -116,28 +117,28 @@ export default function IPCLNDashboard() {
       />
 
       {/* Hero Welcome */}
-      <div className="relative overflow-hidden p-8 md:p-12 rounded-[2.5rem] bg-[#172033] border border-white/5 shadow-2xl">
+      <div className="relative overflow-hidden p-8 md:p-12 rounded-[2.5rem] bg-white border border-slate-200 shadow-2xl">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-purple-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 text-[10px] font-black uppercase tracking-widest">
               Field Operations Active
             </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Ready for shift, <span className="text-purple-400">{session?.user?.name?.split(' ')[0]}</span>?
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              Ready for shift, <span className="text-purple-600">{getDisplayName(session?.user?.name ?? null)}</span>
             </h2>
-            <p className="text-slate-400 font-medium max-w-lg">
+            <p className="text-slate-600 font-medium max-w-lg">
               Maintaining data accuracy is key to preventing hospital-acquired infections. Ensure all device placements are updated.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+            <div className="px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Patients</p>
-              <p className="text-2xl font-black text-white tracking-tighter">{stats.pasienAktif}</p>
+              <p className="text-2xl font-black text-slate-900 tracking-tighter">{stats.pasienAktif}</p>
             </div>
-            <div className="px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+            <div className="px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Today&apos;s Ops</p>
-              <p className="text-2xl font-black text-white tracking-tighter">{stats.tindakanOperasi}</p>
+              <p className="text-2xl font-black text-slate-900 tracking-tighter">{stats.tindakanOperasi}</p>
             </div>
           </div>
         </div>
@@ -149,7 +150,7 @@ export default function IPCLNDashboard() {
           <Link href={action.href} key={i}>
             <Card variant="premium" hoverable className="h-full group">
               <CardHeader>
-                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500">
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-slate-100 transition-all duration-500">
                   {React.cloneElement(action.icon as React.ReactElement, { size: 28 })}
                 </div>
                 <CardTitle className="text-2xl">{action.title}</CardTitle>
@@ -168,8 +169,8 @@ export default function IPCLNDashboard() {
 
       {/* Secondary Modules */}
       <div className="space-y-8 pt-8">
-        <h3 className="text-xl font-black text-white tracking-tight px-2 flex items-center gap-3">
-          <Activity size={20} className="text-purple-400" />
+        <h3 className="text-xl font-black text-slate-900 tracking-tight px-2 flex items-center gap-3">
+          <Activity size={20} className="text-purple-600" />
           Clinical Surveillance
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -182,7 +183,7 @@ export default function IPCLNDashboard() {
             onClick={() => window.location.href = '/ipcln/infeksi'}
           />
           <StatCard
-            title="💊 Monitoring Antibiotik"
+            title="Monitoring Antibiotik"
             value={stats.antibiotics?.aktif || 0}
             description={`Akan Selesai: ${stats.antibiotics?.akanSelesai || 0} • Overdue: ${stats.antibiotics?.overdue || 0} • Perlu Review: ${stats.antibiotics?.perluReview || 0}`}
             icon={<Pill />}
@@ -203,35 +204,35 @@ export default function IPCLNDashboard() {
       {/* Quick Add Modal Overlay */}
       {isQuickAddOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={() => setIsQuickAddOpen(false)} />
-          <Card variant="premium" className="relative w-full max-w-2xl animate-fade-in-up border-white/10 shadow-3xl">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-6">
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-xl" onClick={() => setIsQuickAddOpen(false)} />
+          <Card variant="premium" className="relative w-full max-w-2xl animate-fade-in-up border-slate-200 shadow-3xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-6">
               <div>
                 <CardTitle className="text-2xl">Quick Operations</CardTitle>
                 <CardDescription>Select a fast action to perform.</CardDescription>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setIsQuickAddOpen(false)} className="rounded-full hover:bg-white/5">
-                <X size={20} className="text-slate-400" />
+              <Button variant="ghost" size="icon" onClick={() => setIsQuickAddOpen(false)} className="rounded-full hover:bg-slate-50">
+                <X size={20} className="text-slate-600" />
               </Button>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 p-8">
                <button 
                   onClick={() => router.push('/ipcln/pasien')}
-                  className="group flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300"
+                  className="group flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-slate-50 border border-slate-200 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300"
                 >
-                  <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
+                  <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-600 group-hover:scale-110 transition-transform">
                     <Users size={32} />
                   </div>
-                  <span className="font-bold text-white">Register Patient</span>
+                  <span className="font-bold text-slate-900">Register Patient</span>
                </button>
                <button 
                   onClick={() => router.push('/ipcln/surveilans-harian')}
-                  className="group flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300"
+                  className="group flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-slate-50 border border-slate-200 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300"
                 >
-                  <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
+                  <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-600 group-hover:scale-110 transition-transform">
                     <ClipboardCheck size={32} />
                   </div>
-                  <span className="font-bold text-white">Input Surveillance</span>
+                  <span className="font-bold text-slate-900">Input Surveillance</span>
                </button>
             </CardContent>
           </Card>

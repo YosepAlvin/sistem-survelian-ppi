@@ -95,7 +95,7 @@ export default function VerifikasiTransferPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <PageHeader
           title="Verifikasi Transfer Pasien"
@@ -107,7 +107,7 @@ export default function VerifikasiTransferPage() {
           ]}
         />
 
-        <Card className="mt-6 bg-slate-900/95 border-slate-800">
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle>Daftar Permintaan Transfer</CardTitle>
           </CardHeader>

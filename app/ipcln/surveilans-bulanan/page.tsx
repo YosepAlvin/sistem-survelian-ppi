@@ -163,29 +163,29 @@ export default function SurveilansBulananPage() {
     {
       key: 'uc' as const,
       label: 'UC',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'ivl' as const,
       label: 'IVL',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'vap_days' as const,
       label: 'VAP',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'isk' as const,
       label: 'ISK',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'plb' as const,
       label: 'PLB',
-      className: 'text-center bg-slate-800/90',
+      className: 'text-center bg-slate-50/90',
       render: (value: number) => (
-        <span className={value > 0 ? 'font-bold text-red-300' : 'text-slate-300'}>
+        <span className={value > 0 ? 'font-bold text-red-600' : 'text-slate-700'}>
           {value}
         </span>
       )
@@ -193,24 +193,24 @@ export default function SurveilansBulananPage() {
     {
       key: 'hap' as const,
       label: 'HAP',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'vap' as const,
       label: 'VAP',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     },
     {
       key: 'iadp' as const,
       label: 'IADP',
-      className: 'text-center bg-slate-800/90'
+      className: 'text-center bg-slate-50/90'
     }
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Rekapitulasi Surveilans Bulanan"
             description={isLoading ? `Memuat data ${monthLabel}...` : `Periode: ${monthLabel} • ${roomName}`}
@@ -226,7 +226,7 @@ export default function SurveilansBulananPage() {
                     type="month"
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-auto bg-slate-800 text-white border-slate-700"
+                    className="w-auto bg-slate-50 text-slate-900 border-slate-200"
                   />
                 </FormField>
                 <div className="flex gap-2">
@@ -242,7 +242,7 @@ export default function SurveilansBulananPage() {
           />
         </div>
 
-        <div className="mb-6 rounded-3xl border border-purple-500/20 bg-purple-500/10 p-4 text-sm text-purple-200">
+        <div className="mb-6 rounded-3xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-700">
           Data rekap ini hanya menampilkan pasien dan kejadian yang terkait dengan ruangan {session?.user?.name ? roomName : 'Anda'}, sehingga tidak tercampur dengan ruangan lain.
         </div>
 
@@ -271,40 +271,40 @@ export default function SurveilansBulananPage() {
         </div>
 
         {/* Data Table */}
-        <Card className="bg-slate-900/95 border-slate-800">
+        <Card className="bg-white/95 border-slate-200">
           <CardContent className="p-0">
             <DataTable
               columns={columns}
               data={rows}
               emptyMessage="Tidak ada data surveilans bulan ini untuk ruangan ini."
-              className="bg-slate-950"
+              className="bg-white"
             />
           </CardContent>
         </Card>
 
         {/* Summary Footer */}
-        <Card className="mt-6 bg-slate-900/95 border-slate-800">
+        <Card className="mt-6 bg-white/95 border-slate-200">
           <CardHeader>
             <CardTitle className="text-base">Total Akhir Bulan</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 text-sm md:grid-cols-3">
-              <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Total Pasien</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{totals.pasien}</p>
+              <div className="rounded-3xl border border-slate-200 bg-white/80 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-600">Total Pasien</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">{totals.pasien}</p>
               </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Hari Rawat</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{totals.hariRawat}</p>
+              <div className="rounded-3xl border border-slate-200 bg-white/80 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-600">Hari Rawat</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">{totals.hariRawat}</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">UC + IVL</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{totals.uc + totals.ivl}</p>
+                <div className="rounded-3xl border border-slate-200 bg-white/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-600">UC + IVL</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{totals.uc + totals.ivl}</p>
                 </div>
-                <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Infeksi Total</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{totals.infeksi}</p>
+                <div className="rounded-3xl border border-slate-200 bg-white/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-600">Infeksi Total</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{totals.infeksi}</p>
                 </div>
               </div>
             </div>
@@ -320,9 +320,9 @@ export default function SurveilansBulananPage() {
                 { label: 'VAP', value: totals.vap },
                 { label: 'IADP', value: totals.iadp }
               ].map((item) => (
-                <div key={item.label} className="rounded-3xl border border-slate-800 bg-slate-950/70 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                <div key={item.label} className="rounded-3xl border border-slate-200 bg-white/70 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-600">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{item.value}</p>
                 </div>
               ))}
             </div>

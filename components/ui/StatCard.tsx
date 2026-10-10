@@ -26,16 +26,16 @@ const colorThemes = {
   },
   green: {
     gradient: 'from-emerald-600/20 to-emerald-600/5',
-    border: 'border-emerald-500/20 hover:border-emerald-500/40',
-    icon: 'text-emerald-400 bg-emerald-500/10',
-    trend: 'text-emerald-400 bg-emerald-500/10',
+    border: 'border-emerald-500/20 hover:border-emerald-300',
+    icon: 'text-emerald-700 bg-emerald-500/10',
+    trend: 'text-emerald-700 bg-emerald-500/10',
     glow: 'group-hover:shadow-emerald-500/10'
   },
   purple: {
     gradient: 'from-purple-600/20 to-purple-600/5',
     border: 'border-purple-500/20 hover:border-purple-500/40',
-    icon: 'text-purple-400 bg-purple-500/10',
-    trend: 'text-purple-400 bg-purple-500/10',
+    icon: 'text-purple-600 bg-purple-500/10',
+    trend: 'text-purple-600 bg-purple-500/10',
     glow: 'group-hover:shadow-purple-500/10'
   },
   red: {
@@ -48,8 +48,8 @@ const colorThemes = {
   amber: {
     gradient: 'from-amber-600/20 to-amber-600/5',
     border: 'border-amber-500/20 hover:border-amber-500/40',
-    icon: 'text-amber-400 bg-amber-500/10',
-    trend: 'text-amber-400 bg-amber-500/10',
+    icon: 'text-amber-600 bg-amber-500/10',
+    trend: 'text-amber-600 bg-amber-500/10',
     glow: 'group-hover:shadow-amber-500/10'
   }
 }
@@ -73,7 +73,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
         onClick={onClick}
         className={cn(
           'relative overflow-hidden group p-6 rounded-[2rem] border transition-all duration-500',
-          'bg-[#172033]/50 backdrop-blur-xl',
+          'bg-slate-50 backdrop-blur-xl',
           theme.border,
           theme.glow,
           onClick && 'cursor-pointer hover:translate-y-[-8px]',
@@ -95,26 +95,26 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
             )}
             
             {onClick && (
-              <div className="p-2 rounded-full bg-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <ArrowUpRight size={16} className="text-slate-400" />
+              <div className="p-2 rounded-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <ArrowUpRight size={16} className="text-slate-600" />
               </div>
             )}
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-slate-400 text-sm font-bold tracking-tight uppercase group-hover:text-slate-200 transition-colors">
+            <h3 className="text-slate-600 text-sm font-bold tracking-tight uppercase group-hover:text-slate-800 transition-colors">
               {title}
             </h3>
             
             <div className="flex items-end justify-between gap-2">
-              <p className="text-white text-4xl font-black tracking-tighter">
+              <p className="text-slate-900 text-4xl font-black tracking-tighter">
                 {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
               </p>
               
               {trend && (
                 <div className={cn(
                   'flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-500 group-hover:scale-105',
-                  trend.isPositive ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                  trend.isPositive ? 'text-emerald-700 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
                 )}>
                   {trend.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                   {Math.abs(trend.value)}%
@@ -124,7 +124,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
           </div>
 
           {description && (
-            <p className="text-slate-500 text-xs font-medium mt-4 group-hover:text-slate-400 transition-colors">
+            <p className="text-slate-500 text-xs font-medium mt-4 group-hover:text-slate-600 transition-colors">
               {description}
             </p>
           )}

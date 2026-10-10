@@ -320,9 +320,9 @@ export default function VerifikasiInfeksiPage() {
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-emerald-600 p-4 text-white flex justify-between items-center">
+            <div className="bg-emerald-600 p-4 text-slate-900 flex justify-between items-center">
               <h2 className="text-xl font-bold">Detail Verifikasi Laporan</h2>
-              <button onClick={() => setSelectedReport(null)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+              <button onClick={() => setSelectedReport(null)} className="text-slate-900 hover:text-gray-200 text-2xl">&times;</button>
             </div>
             <div className="p-6 space-y-6">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -364,8 +364,8 @@ export default function VerifikasiInfeksiPage() {
                             <p className="font-semibold text-slate-800">{device.jenis_alat}</p>
                             <span className="text-xs text-slate-500">Device Days: {device.device_day}</span>
                           </div>
-                          <p className="text-sm text-slate-600">Mulai: {device.tanggal_pasang ? new Date(device.tanggal_pasang).toLocaleDateString('id-ID') : '—'}</p>
-                          <p className="text-sm text-slate-600">{device.masih_terpasang ? 'Masih Aktif' : `Selesai: ${device.tanggal_lepas ? new Date(device.tanggal_lepas).toLocaleDateString('id-ID') : '—'}`}</p>
+                          <p className="text-sm text-slate-600">Mulai: {device.tanggal_pasang ? new Date(device.tanggal_pasang).toLocaleDateString('id-ID') : '-'}</p>
+                    <p className="text-sm text-slate-600">{device.masih_terpasang ? 'Masih Aktif' : `Selesai: ${device.tanggal_lepas ? new Date(device.tanggal_lepas).toLocaleDateString('id-ID') : '-'}`}</p>
                         </div>
                       )) : <p className="text-sm text-slate-500">Tidak ada data alat terpasang.</p>}
                     </div>
@@ -393,7 +393,7 @@ export default function VerifikasiInfeksiPage() {
               </div>
 
               {/* Full Audit Trail Viewer */}
-              <div className="bg-slate-900 text-white p-6 rounded-lg border border-slate-700">
+              <div className="bg-white text-slate-900 p-6 rounded-lg border border-slate-200">
                 <AuditTrailViewer rawatInapId={selectedReport.rawat_inap_id} />
               </div>
             </div>
@@ -406,7 +406,7 @@ export default function VerifikasiInfeksiPage() {
                   <Button onClick={() => { openRejectModal(selectedReport.id, selectedReport.entityType); setSelectedReport(null); }} variant="outline" className="text-red-600 border-red-200">Tolak</Button>
                 </>
               )}
-              <Button onClick={() => setSelectedReport(null)} className="bg-slate-700 text-white">Tutup</Button>
+              <Button onClick={() => setSelectedReport(null)} className="bg-slate-700 text-slate-900">Tutup</Button>
             </div>
           </div>
         </div>
@@ -415,14 +415,14 @@ export default function VerifikasiInfeksiPage() {
       {showRejectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="bg-red-600 p-4 text-white"><h2 className="text-xl font-bold">Alasan Penolakan</h2></div>
+            <div className="bg-red-600 p-4 text-slate-900"><h2 className="text-xl font-bold">Alasan Penolakan</h2></div>
             <div className="p-6 space-y-4">
               <label className="text-sm font-semibold text-gray-700">Berikan alasan mengapa laporan ini ditolak:</label>
               <textarea className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" rows={4} placeholder="Contoh: Data kurang lengkap, mohon input ulang kronologi..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}></textarea>
             </div>
             <div className="bg-slate-50 p-4 flex justify-end gap-2">
               <Button onClick={() => setShowRejectModal(false)} variant="ghost">Batal</Button>
-              <Button onClick={handleReject} className="bg-red-600 hover:bg-red-700 text-white" disabled={!rejectReason}>Simpan Penolakan</Button>
+              <Button onClick={handleReject} className="bg-red-600 hover:bg-red-700 text-slate-900" disabled={!rejectReason}>Simpan Penolakan</Button>
             </div>
           </div>
         </div>

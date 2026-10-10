@@ -84,7 +84,7 @@ export default function VerifikasiPulangPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <PageHeader
           title="Verifikasi Pulang Pasien"
@@ -96,7 +96,7 @@ export default function VerifikasiPulangPage() {
           ]}
         />
 
-        <Card className="mt-6 bg-slate-900/95 border-slate-800">
+        <Card className="mt-6 bg-white/95 border-slate-200">
           <CardHeader>
             <CardTitle>Daftar Permintaan Pulang</CardTitle>
           </CardHeader>

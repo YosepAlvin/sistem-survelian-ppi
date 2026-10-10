@@ -112,9 +112,9 @@ export default function LaporanBulananIPCNPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Laporan Bulanan & Permil"
             description="Rekapitulasi seluruh rumah sakit per bulan"
@@ -126,31 +126,31 @@ export default function LaporanBulananIPCNPage() {
             ]}
             actions={
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-3 py-2 rounded-lg bg-slate-800 text-white border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <Button onClick={handleExport} disabled={isExporting} className="bg-green-600 hover:bg-green-700 text-white">{isExporting ? 'Memproses...' : 'Export Excel'}</Button>
-                <Button onClick={() => window.print()} variant="outline" className="border-slate-700 text-slate-200">Print Friendly</Button>
+                <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-3 py-2 rounded-lg bg-slate-50 text-slate-900 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <Button onClick={handleExport} disabled={isExporting} className="bg-green-600 hover:bg-green-700 text-slate-900">{isExporting ? 'Memproses...' : 'Export Excel'}</Button>
+                <Button onClick={() => window.print()} variant="outline" className="border-slate-200 text-slate-800">Print Friendly</Button>
               </div>
             }
           />
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Pasien Disurveilans</p><p className="text-2xl font-bold text-white">{summary.totalPasienDisurveilans}</p></CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Device Days</p><p className="text-2xl font-bold text-white">{summary.totalDeviceDays}</p></CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Patient Days</p><p className="text-2xl font-bold text-white">{summary.totalPasienDisurveilans}</p></CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Event HAIs</p><p className="text-2xl font-bold text-white">{summary.totalEventHAIs}</p></CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Event Aktif</p><p className="text-2xl font-bold text-white">{summary.totalEventAktif}</p></CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><p className="text-slate-400 text-sm">Total Event Selesai</p><p className="text-2xl font-bold text-white">{summary.totalEventSelesai}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Pasien Disurveilans</p><p className="text-2xl font-bold text-slate-900">{summary.totalPasienDisurveilans}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Device Days</p><p className="text-2xl font-bold text-slate-900">{summary.totalDeviceDays}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Patient Days</p><p className="text-2xl font-bold text-slate-900">{summary.totalPasienDisurveilans}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Event HAIs</p><p className="text-2xl font-bold text-slate-900">{summary.totalEventHAIs}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Event Aktif</p><p className="text-2xl font-bold text-slate-900">{summary.totalEventAktif}</p></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><p className="text-slate-600 text-sm">Total Event Selesai</p><p className="text-2xl font-bold text-slate-900">{summary.totalEventSelesai}</p></CardContent></Card>
           </div>
 
           <div className="mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><h3 className="font-semibold text-white mb-3">Statistik per Jenis Infeksi</h3>{Object.entries(summary.infectionStats).map(([name, value]) => <div key={name} className="flex justify-between text-sm text-slate-300 py-1"><span>{name}</span><span className="font-semibold text-white">{value} kasus</span></div>)}</CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><h3 className="font-semibold text-white mb-3">Statistik per Ruangan</h3>{rows.map((row) => <div key={row.ruangan} className="flex justify-between text-sm text-slate-300 py-1"><span>{row.ruangan}</span><span className="font-semibold text-white">{row.total_infeksi} HAIs</span></div>)}</CardContent></Card>
-            <Card className="bg-slate-950 border-slate-800"><CardContent className="p-4"><h3 className="font-semibold text-white mb-3">Top Device Utilization</h3><div className="flex justify-between text-sm text-slate-300 py-1"><span>Urine Kateter</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.kateter_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>Ventilator</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.ventilator_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>CVC</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.infus_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>ETT</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.ett_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>Trakeostomi</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.trakeostomi_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>NGT</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.ngt_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>Drain Operasi</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.drain_operasi_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-300 py-1"><span>Chest Tube (WSD)</span><span className="font-semibold text-white">{rows.reduce((sum, row) => sum + Number(row.chest_tube_day || 0), 0)} Device Days</span></div></CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><h3 className="font-semibold text-slate-900 mb-3">Statistik per Jenis Infeksi</h3>{Object.entries(summary.infectionStats).map(([name, value]) => <div key={name} className="flex justify-between text-sm text-slate-700 py-1"><span>{name}</span><span className="font-semibold text-slate-900">{value} kasus</span></div>)}</CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><h3 className="font-semibold text-slate-900 mb-3">Statistik per Ruangan</h3>{rows.map((row) => <div key={row.ruangan} className="flex justify-between text-sm text-slate-700 py-1"><span>{row.ruangan}</span><span className="font-semibold text-slate-900">{row.total_infeksi} HAIs</span></div>)}</CardContent></Card>
+            <Card className="bg-white border-slate-200"><CardContent className="p-4"><h3 className="font-semibold text-slate-900 mb-3">Top Device Utilization</h3><div className="flex justify-between text-sm text-slate-700 py-1"><span>Urine Kateter</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.kateter_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>Ventilator</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.ventilator_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>CVC</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.infus_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>ETT</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.ett_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>Trakeostomi</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.trakeostomi_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>NGT</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.ngt_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>Drain Operasi</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.drain_operasi_day || 0), 0)} Device Days</span></div><div className="flex justify-between text-sm text-slate-700 py-1"><span>Chest Tube (WSD)</span><span className="font-semibold text-slate-900">{rows.reduce((sum, row) => sum + Number(row.chest_tube_day || 0), 0)} Device Days</span></div></CardContent></Card>
           </div>
 
-          <Card className="mt-8 bg-slate-950 border-slate-800">
+          <Card className="mt-8 bg-white border-slate-200">
             <CardContent className="pt-6 overflow-x-auto">
-              <DataTable columns={columns} data={rows} loading={loading} emptyMessage="Tidak ada data laporan" className="min-w-[1000px] bg-slate-950" />
+              <DataTable columns={columns} data={rows} loading={loading} emptyMessage="Tidak ada data laporan" className="min-w-[1000px] bg-white" />
             </CardContent>
           </Card>
         </div>

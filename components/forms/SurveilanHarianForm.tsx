@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -8,8 +9,10 @@ import { surveilansSchema, type SurveilansFormValues } from "@/lib/validations/s
 import axios from "axios"
 import { useRouter } from "next/navigation"
 import { getCurrentDateTimeLocal } from '@/lib/date-utils'
+import { Logo } from "@/components/ui/Logo"
 import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
+import { Lightbulb } from 'lucide-react'
 
 interface Props {
   initialData?: any;
@@ -25,18 +28,18 @@ const DEFAULT_INFEKSI = [
 ]
 
 const DEFAULT_ALAT = [
-  { jenis_alat: 'Vena sentra', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Vena perifer', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Arteri', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Umbilikai', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Urine kateter', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Suprapubik kateter', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Ventilator', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Endotracheal Tube (ETT)', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Trakeostomi', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Nasogastric Tube (NGT)', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Drain operasi', terpasang: false, lokasi: "", catatan: "" },
-  { jenis_alat: 'Chest tube (WSD)', terpasang: false, lokasi: "", catatan: "" },
+  { jenis_alat: 'Vena sentra', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Vena perifer', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Arteri', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Umbilikai', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Urine kateter', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Suprapubik kateter', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Ventilator', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Endotracheal Tube (ETT)', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Trakeostomi', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Nasogastric Tube (NGT)', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Drain operasi', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
+  { jenis_alat: 'Chest tube (WSD)', terpasang: false, lokasi: "", catatan: "", ganti_baru: false },
 ]
 
 export default function SurveilanHarianForm({ initialData }: Props) {
@@ -52,7 +55,8 @@ export default function SurveilanHarianForm({ initialData }: Props) {
         jenis_alat: alat.jenisAlat,
         terpasang: false,
         lokasi: "",
-        catatan: ""
+        catatan: "",
+        ganti_baru: false
       }))
     }
     return DEFAULT_ALAT
@@ -64,7 +68,12 @@ export default function SurveilanHarianForm({ initialData }: Props) {
       sumber_dirawat: "IGD",
       suhu: "",
       alat_terpasang: alatList,
-      infeksi: DEFAULT_INFEKSI
+      infeksi: DEFAULT_INFEKSI,
+      tirah_baring: false,
+      decubitus: false,
+      pindah_ruangan: [],
+      operasi: [],
+      antibiotik: []
     } as any
   })
 
@@ -78,7 +87,7 @@ export default function SurveilanHarianForm({ initialData }: Props) {
       // Build alat_terpasang with proper prefill
       const alatTerpasangPrefill = (() => {
         // Start with current alat list (from API or default)
-        let alatPrefill = alatList.map((alat: { jenis_alat: string; terpasang: boolean; lokasi: string; catatan: string }) => ({ ...alat }));
+        let alatPrefill = alatList.map((alat: { jenis_alat: string; terpasang: boolean; lokasi: string; catatan: string; ganti_baru: boolean }) => ({ ...alat }));
         // Merge saved data if any
         if (Array.isArray(initialData.alat_terpasang) && initialData.alat_terpasang.length > 0) {
           // For each saved item, update corresponding entry
@@ -90,7 +99,8 @@ export default function SurveilanHarianForm({ initialData }: Props) {
                 ...saved,
                 // Ensure all optional string fields are empty strings instead of 0
                 lokasi: (saved.lokasi == null || saved.lokasi === 0) ? "" : String(saved.lokasi),
-                catatan: (saved.catatan == null || saved.catatan === 0) ? "" : String(saved.catatan)
+                catatan: (saved.catatan == null || saved.catatan === 0) ? "" : String(saved.catatan),
+                ganti_baru: saved.ganti_baru ?? false
               };
             }
           });
@@ -137,9 +147,14 @@ export default function SurveilanHarianForm({ initialData }: Props) {
         suhu: initialData.suhu != null && initialData.suhu !== 0 ? String(initialData.suhu) : "",
         alat_terpasang: alatTerpasangPrefill as any,
         infeksi: infeksiPrefill as any,
+        tirah_baring: false,
+        decubitus: false,
+        pindah_ruangan: [],
+        operasi: [],
+        antibiotik: []
       } as any);
     }
-  }, [initialData, alatList])
+  }, [initialData, alatList, reset])
 
   const onSubmit = async (data: SurveilansFormValues) => {
     const payload = {
@@ -165,25 +180,25 @@ export default function SurveilanHarianForm({ initialData }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-5xl mx-auto bg-slate-950 border border-slate-800 shadow-xl rounded-lg overflow-hidden my-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-5xl mx-auto bg-white border border-slate-200 shadow-xl rounded-lg overflow-hidden my-8">
       {notice && (
         <div className={`p-4 text-sm ${notice.type === 'success' ? 'bg-emerald-800 text-emerald-100' : 'bg-rose-900 text-rose-100'} border ${notice.type === 'success' ? 'border-emerald-700' : 'border-rose-700'}`}>
           {notice.text}
         </div>
       )}
       {/* Header Kop Surat */}
-      <div className="p-6 border-b-2 border-slate-700 flex justify-between items-center bg-slate-900">
+      <div className="p-6 border-b-2 border-slate-200 flex justify-between items-center bg-white">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-slate-800 rounded flex items-center justify-center font-bold text-xs text-center border border-slate-700">LOGO RS</div>
+          <Image src="/logo.png" alt="Logo RS Budi Rahayu" width={64} height={64} className="w-16 h-16 object-contain rounded" />
           <div>
-            <h2 className="font-bold text-sm uppercase text-slate-200">Yayasan Santa Maria Pekalongan</h2>
-            <h1 className="font-bold text-xl uppercase text-white">RSU Budi Rahayu</h1>
-            <p className="text-[10px] leading-tight text-slate-400">Jl. Barito No. 5 Pekalongan 51146<br/>Telp (0285) 423491, Fax (0285) 4232002</p>
+            <h2 className="font-bold text-sm uppercase text-slate-800">Yayasan Santa Maria Pekalongan</h2>
+            <h1 className="font-bold text-xl uppercase text-slate-900">RSU Budi Rahayu</h1>
+            <p className="text-[10px] leading-tight text-slate-600">Jl. Barito No. 5 Pekalongan 51146<br/>Telp (0285) 423491, Fax (0285) 4232002</p>
           </div>
         </div>
-        <div className="text-right border-l-2 pl-6 border-slate-700">
-          <h2 className="font-bold text-lg leading-tight text-white">FORMULIR SURVEILANS INFEKSI</h2>
-          <p className="text-[10px] uppercase font-semibold text-slate-300">Pencegahan dan Pengendalian Infeksi Rumah Sakit</p>
+        <div className="text-right border-l-2 pl-6 border-slate-200">
+          <h2 className="font-bold text-lg leading-tight text-slate-900">FORMULIR SURVEILANS INFEKSI</h2>
+          <p className="text-[10px] uppercase font-semibold text-slate-700">Pencegahan dan Pengendalian Infeksi Rumah Sakit</p>
         </div>
       </div>
 
@@ -192,14 +207,14 @@ export default function SurveilanHarianForm({ initialData }: Props) {
           Status alat terpasang mengikuti snapshot harian terbaru. Centang alat yang terlihat terpasang hari ini, lalu kosongkan jika alat sudah dilepas.
         </div>
         {/* Bagian Atas: Ruangan & Tanggal */}
-        <div className="grid grid-cols-2 gap-8 bg-slate-900 p-4 rounded border border-slate-800">
+        <div className="grid grid-cols-2 gap-8 bg-white p-4 rounded border border-slate-200">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-bold w-24 text-slate-200">RUANGAN :</label>
-              <input {...register("ruangan")} placeholder="Kode Ruangan (e.g. ICU)" className="border-b border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none focus:border-blue-500" />
+              <label className="text-sm font-bold w-24 text-slate-800">RUANGAN :</label>
+              <input {...register("ruangan")} placeholder="Kode Ruangan (e.g. ICU)" className="border-b border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none focus:border-blue-500" />
             </div>
-            {errors.ruangan && <p className="text-rose-400 text-xs pl-24">{errors.ruangan.message}</p>}
-            <div className="flex items-center gap-4 text-sm pl-24 text-slate-300">
+            {errors.ruangan && <p className="text-rose-600 text-xs pl-24">{errors.ruangan.message}</p>}
+            <div className="flex items-center gap-4 text-sm pl-24 text-slate-700">
               <span>Sumber dirawat:</span>
               <label className="flex items-center gap-1"><input type="radio" value="IGD" {...register("sumber_dirawat")} className="accent-blue-500" /> IGD</label>
               <label className="flex items-center gap-1"><input type="radio" value="POLI" {...register("sumber_dirawat")} className="accent-blue-500" /> POLI</label>
@@ -207,48 +222,48 @@ export default function SurveilanHarianForm({ initialData }: Props) {
           </div>
           <div className="space-y-4 w-full">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-bold text-slate-200">Tanggal masuk RS/Jam :</label>
-              <input type="datetime-local" {...register("tanggal_masuk")} className="border-b border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none focus:border-blue-500" />
+              <label className="text-sm font-bold text-slate-800">Tanggal masuk RS/Jam :</label>
+              <input type="datetime-local" {...register("tanggal_masuk")} className="border-b border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none focus:border-blue-500" />
             </div>
-            {errors.tanggal_masuk && <p className="text-rose-400 text-xs">{errors.tanggal_masuk.message}</p>}
+            {errors.tanggal_masuk && <p className="text-rose-600 text-xs">{errors.tanggal_masuk.message}</p>}
             <div className="flex items-center gap-2">
-              <label className="text-sm font-bold text-slate-200">Suhu (°C) :</label>
-              <input type="text" defaultValue="" {...register("suhu")} placeholder="36.5" inputMode="decimal" className="border-b border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none focus:border-blue-500" />
+              <label className="text-sm font-bold text-slate-800">Suhu (°C) :</label>
+              <input type="text" defaultValue="" {...register("suhu")} placeholder="36.5" inputMode="decimal" className="border-b border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none focus:border-blue-500" />
             </div>
-            {errors.suhu && <p className="text-rose-400 text-xs">{errors.suhu.message}</p>}
+            {errors.suhu && <p className="text-rose-600 text-xs">{errors.suhu.message}</p>}
           </div>
         </div>
 
         {/* I. Identitas Pasien */}
         <section>
-          <h3 className="font-bold border-b border-slate-700 mb-4 text-slate-100 flex items-center gap-2">
-            <span className="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">I</span>
+          <h3 className="font-bold border-b border-slate-200 mb-4 text-slate-900 flex items-center gap-2">
+            <span className="bg-blue-900 text-slate-900 w-6 h-6 rounded-full flex items-center justify-center text-xs">I</span>
             IDENTITAS PASIEN
           </h3>
-          <div className="grid grid-cols-1 gap-3 pl-8 text-slate-200">
+          <div className="grid grid-cols-1 gap-3 pl-8 text-slate-800">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <label className="text-sm w-32">1. Nama pasien</label>
                 <span className="text-sm">:</span>
-                <input {...register("nama_pasien")} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none" />
+                <input {...register("nama_pasien")} className="border-b border-dotted border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none" />
               </div>
-              {errors.nama_pasien && <p className="text-rose-400 text-xs pl-36">{errors.nama_pasien.message}</p>}
+              {errors.nama_pasien && <p className="text-rose-600 text-xs pl-36">{errors.nama_pasien.message}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <label className="text-sm w-32">No. RM</label>
                 <span className="text-sm">:</span>
-                <input {...register("no_rm")} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none" />
+                <input {...register("no_rm")} className="border-b border-dotted border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none" />
               </div>
-              {errors.no_rm && <p className="text-rose-400 text-xs pl-36">{errors.no_rm.message}</p>}
+              {errors.no_rm && <p className="text-rose-600 text-xs pl-36">{errors.no_rm.message}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <label className="text-sm w-32">2. Umur</label>
                 <span className="text-sm">:</span>
-                <input {...register("umur")} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none" />
+                <input {...register("umur")} className="border-b border-dotted border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none" />
               </div>
-              {errors.umur && <p className="text-rose-400 text-xs pl-36">{errors.umur.message}</p>}
+              {errors.umur && <p className="text-rose-600 text-xs pl-36">{errors.umur.message}</p>}
             </div>
             <div className="flex items-center gap-4">
               <label className="text-sm w-32">3. Jenis kelamin</label>
@@ -259,38 +274,38 @@ export default function SurveilanHarianForm({ initialData }: Props) {
             <div className="flex items-start gap-2">
               <label className="text-sm w-32">4. Alamat</label>
               <span className="text-sm">:</span>
-              <textarea {...register("alamat")} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none resize-none" rows={1}></textarea>
+              <textarea {...register("alamat")} className="border-b border-dotted border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none resize-none" rows={1}></textarea>
             </div>
           </div>
         </section>
 
         {/* II. Diagnosa */}
         <section>
-          <h3 className="font-bold border-b border-slate-700 mb-4 text-slate-100 flex items-center gap-2 uppercase">
-            <span className="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">II</span>
+          <h3 className="font-bold border-b border-slate-200 mb-4 text-slate-900 flex items-center gap-2 uppercase">
+            <span className="bg-blue-900 text-slate-900 w-6 h-6 rounded-full flex items-center justify-center text-xs">II</span>
             Diagnosa Saat Masuk RS
           </h3>
           <div className="pl-8">
-            <input {...register("diagnosa_masuk")} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 w-full focus:outline-none" />
-            {errors.diagnosa_masuk && <p className="text-rose-400 text-xs mt-1">{errors.diagnosa_masuk.message}</p>}
+            <input {...register("diagnosa_masuk")} className="border-b border-dotted border-slate-200 bg-white text-slate-900 w-full focus:outline-none" />
+            {errors.diagnosa_masuk && <p className="text-rose-600 text-xs mt-1">{errors.diagnosa_masuk.message}</p>}
           </div>
         </section>
 
         {/* IV. Faktor Resiko (Tabel) */}
         <section>
-          <h3 className="font-bold border-b border-slate-700 mb-4 text-slate-100 flex items-center gap-2 uppercase">
-            <span className="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">IV</span>
+          <h3 className="font-bold border-b border-slate-200 mb-4 text-slate-900 flex items-center gap-2 uppercase">
+            <span className="bg-blue-900 text-slate-900 w-6 h-6 rounded-full flex items-center justify-center text-xs">IV</span>
             Faktor Resiko Selama Dirawat
           </h3>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-700 text-xs text-slate-100">
+            <table className="w-full border-collapse border border-slate-200 text-xs text-slate-900">
               <thead>
-                <tr className="bg-slate-900 text-slate-200">
-                  <th className="border border-slate-700 p-2 w-10">No.</th>
-                  <th className="border border-slate-700 p-2">Jenis tindakan/alkes</th>
-                  <th className="border border-slate-700 p-2">lokasi</th>
-                  <th className="border border-slate-700 p-2">Hari Ke</th>
-                  <th className="border border-slate-700 p-2">Catatan</th>
+                <tr className="bg-white text-slate-800">
+                  <th className="border border-slate-200 p-2 w-10">No.</th>
+                  <th className="border border-slate-200 p-2">Jenis tindakan/alkes</th>
+                  <th className="border border-slate-200 p-2">lokasi</th>
+                  <th className="border border-slate-200 p-2">Hari Ke</th>
+                  <th className="border border-slate-200 p-2">Catatan</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,11 +315,11 @@ export default function SurveilanHarianForm({ initialData }: Props) {
                   const deviceSaran = initialData?.active_devices?.find((d: any) => d.jenis_alat === deviceType)?.saran
                   const activeDevice = initialData?.active_devices?.find((d: any) => d.jenis_alat === deviceType)
                   return (
-                    <tr key={index} className="odd:bg-slate-950 even:bg-slate-900">
-                      <td className="border border-slate-700 p-2 text-center">{index + 1}.</td>
-                      <td className="border border-slate-700 p-2">
+                    <tr key={index} className="odd:bg-white even:bg-white">
+                      <td className="border border-slate-200 p-2 text-center">{index + 1}.</td>
+                      <td className="border border-slate-200 p-2">
                         <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-center text-slate-200">
+                          <div className="flex justify-between items-center text-slate-800">
                             <span>{deviceType}</span>
                             <div className="flex items-center gap-3">
                               <label className="flex items-center gap-1 text-[10px] text-slate-500">
@@ -318,21 +333,22 @@ export default function SurveilanHarianForm({ initialData }: Props) {
                             </div>
                           </div>
                           {deviceSaran && (
-                            <div className={`p-2 rounded border text-[10px] ${deviceSaran.jenis_saran === 'LEPAS_ALAT' ? 'bg-red-900/30 border-red-700 text-red-200' : deviceSaran.jenis_saran === 'GANTI_ALAT' ? 'bg-amber-900/30 border-amber-700 text-amber-200' : 'bg-blue-900/30 border-blue-700 text-blue-200'}`}>
-                              <div className="font-semibold flex items-center gap-1">
-                                💡 Saran dari IPCN: {deviceSaran.jenis_saran === 'LEPAS_ALAT' ? 'Lepas Alat' : deviceSaran.jenis_saran === 'GANTI_ALAT' ? 'Ganti Alat' : 'Catatan'}
-                                {deviceSaran.creator?.name && <span className="text-slate-400">({deviceSaran.creator.name})</span>}
+                            <div className={`p-2 rounded border text-[10px] ${deviceSaran.jenis_saran === 'LEPAS_ALAT' ? 'bg-red-50 border-red-200 text-red-700' : deviceSaran.jenis_saran === 'GANTI_ALAT' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+                              <div className="font-semibold flex items-center gap-1.5">
+                                <Lightbulb size={13} strokeWidth={2.2} />
+                                Saran dari IPCN: {deviceSaran.jenis_saran === 'LEPAS_ALAT' ? 'Lepas Alat' : deviceSaran.jenis_saran === 'GANTI_ALAT' ? 'Ganti Alat' : 'Catatan'}
+                                {deviceSaran.creator?.name && <span className="text-slate-600">({deviceSaran.creator.name})</span>}
                               </div>
                               <div className="mt-1">{deviceSaran.catatan}</div>
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="border border-slate-700"><input {...register(`alat_terpasang.${index}.lokasi`)} className="w-full h-full p-1 bg-slate-950 text-slate-100 focus:outline-none" /></td>
-                      <td className="border border-slate-700 p-1 text-center">
+                      <td className="border border-slate-200"><input {...register(`alat_terpasang.${index}.lokasi`)} className="w-full h-full p-1 bg-white text-slate-900 focus:outline-none" /></td>
+                      <td className="border border-slate-200 p-1 text-center">
                         {activeDevice?.device_day || "-"}
                       </td>
-                      <td className="border border-slate-700"><input {...register(`alat_terpasang.${index}.catatan`)} className="w-full h-full p-1 bg-slate-950 text-slate-100 focus:outline-none" /></td>
+                      <td className="border border-slate-200"><input {...register(`alat_terpasang.${index}.catatan`)} className="w-full h-full p-1 bg-white text-slate-900 focus:outline-none" /></td>
                     </tr>
                   )
                 })}
@@ -343,11 +359,11 @@ export default function SurveilanHarianForm({ initialData }: Props) {
 
         {/* VI. Komplikasi/Infeksi Rumah Sakit */}
         <section>
-          <h3 className="font-bold border-b border-slate-700 mb-4 text-slate-100 flex items-center gap-2 uppercase">
-            <span className="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">VI</span>
+          <h3 className="font-bold border-b border-slate-200 mb-4 text-slate-900 flex items-center gap-2 uppercase">
+            <span className="bg-blue-900 text-slate-900 w-6 h-6 rounded-full flex items-center justify-center text-xs">VI</span>
             Komplikasi/Infeksi Rumah Sakit
           </h3>
-          <div className="pl-8 grid grid-cols-1 gap-6 text-sm text-slate-200">
+          <div className="pl-8 grid grid-cols-1 gap-6 text-sm text-slate-800">
             {[0, 1, 2, 3, 4, 5].map((index) => {
               const infectionType = DEFAULT_INFEKSI[index].jenis
               const activeInfection = initialData?.active_infections?.find((i: any) => i.jenis_infeksi === infectionType)
@@ -361,15 +377,15 @@ export default function SurveilanHarianForm({ initialData }: Props) {
                       <input 
                         {...register(`infeksi.${index}.hari_ke`)} 
                         readOnly 
-                        className="border-b border-dotted border-slate-700 bg-slate-800 text-slate-300 w-24" 
+                        className="border-b border-dotted border-slate-200 bg-slate-50 text-slate-700 w-24" 
                         value={activeInfection?.hari_ke || ""}
                       />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pl-4">
-                    <label className="text-xs text-slate-400 w-44">Hasil Kultur/Catatan</label>
+                    <label className="text-xs text-slate-600 w-44">Hasil Kultur/Catatan</label>
                     <span>:</span>
-                    <input {...register(`infeksi.${index}.hasil_kultur`)} className="border-b border-dotted border-slate-700 bg-slate-950 text-slate-100 flex-1 focus:outline-none" />
+                    <input {...register(`infeksi.${index}.hasil_kultur`)} className="border-b border-dotted border-slate-200 bg-white text-slate-900 flex-1 focus:outline-none" />
                   </div>
                 </div>
               )
@@ -378,8 +394,8 @@ export default function SurveilanHarianForm({ initialData }: Props) {
         </section>
 
         {/* Footer Buttons */}
-        <div className="pt-8 border-t border-slate-700 flex justify-end gap-4">
-          <Button type="button" variant="outline" className="px-8 border-slate-700 text-slate-100 hover:bg-slate-800" onClick={() => router.refresh()}>Reset</Button>
+        <div className="pt-8 border-t border-slate-200 flex justify-end gap-4">
+          <Button type="button" variant="outline" className="px-8 border-slate-200 text-slate-900 hover:bg-slate-50" onClick={() => router.refresh()}>Reset</Button>
           <Button type="submit" disabled={isSubmitting} className="px-12 bg-blue-900 hover:bg-blue-800">
             {isSubmitting ? "Menyimpan..." : "Simpan Formulir"}
           </Button>

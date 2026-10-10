@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       if (status === "OVERDUE") {
         candidates.push({
           type: "ANTIBIOTIK_OVERDUE",
-          title: "⚠️ Antibiotik Overdue",
+          title: "Antibiotik Overdue",
           message: `${abNama} pasien ${pasienNama} telah melewati batas durasi terapi.`,
         })
       }
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       if (status === "AKAN_SELESAI") {
         candidates.push({
           type: "ANTIBIOTIK_AKAN_SELESAI",
-          title: "⏳ Antibiotik Akan Selesai",
+          title: "Antibiotik Akan Selesai",
           message: `${abNama} pasien ${pasienNama} mendekati batas durasi terapi.`,
         })
       }
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       if (status === "PERLU_REVIEW") {
         candidates.push({
           type: "ANTIBIOTIK_PERLU_REVIEW",
-          title: "🔍 Perlu Review IPCN",
+          title: "Perlu Review IPCN",
           message: `${abNama} pasien ${pasienNama} memerlukan review IPCN.`,
         })
       }

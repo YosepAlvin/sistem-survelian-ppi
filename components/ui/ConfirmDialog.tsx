@@ -35,12 +35,12 @@ const ConfirmDialog = React.forwardRef<HTMLDivElement, ConfirmDialogProps>(
         onClick={onCancel}
       >
         <div
-          className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-slide-in"
+          className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-slide-in"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-700">
-            <h2 className="text-lg font-bold text-white">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-900">
               {title}
             </h2>
           </div>
@@ -48,14 +48,14 @@ const ConfirmDialog = React.forwardRef<HTMLDivElement, ConfirmDialogProps>(
           {/* Content */}
           <div className="px-6 py-4">
             {description && (
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-600 text-sm">
                 {description}
               </p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-700 flex gap-3 justify-end">
+          <div className="px-6 py-4 border-t border-slate-200 flex gap-3 justify-end">
             <Button
             variant="secondary"
               onClick={onCancel}

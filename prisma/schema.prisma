@@ -17,14 +17,15 @@ model Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  roleId    Int
-  ruanganId Int?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  password     String
+  roleId       Int
+  ruanganId    Int?
+  isActive     Boolean  @default(true)
+  profileImage String?
+  createdAt    DateTime @default(now())
 
   role   Role   @relation(fields: [roleId], references: [id])
   ruangan Ruangan? @relation(fields: [ruanganId], references: [id])

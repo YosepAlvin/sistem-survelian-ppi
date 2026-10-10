@@ -116,9 +116,9 @@ export default function DeviceDayMonitoringPage() {
   const colors: ("blue" | "green" | "purple" | "amber" | "red")[] = ["blue", "purple", "amber", "green", "red", "blue", "purple", "amber", "green", "red", "blue", "purple"]
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Monitoring Device Day"
             description="Pemantauan penggunaan alat medis secara real-time"
@@ -155,10 +155,10 @@ export default function DeviceDayMonitoringPage() {
         {selectedDevice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Card className="max-w-lg w-full overflow-hidden">
-              <CardHeader className="bg-blue-600 text-white rounded-t-lg border-b-0">
+              <CardHeader className="bg-blue-600 text-slate-900 rounded-t-lg border-b-0">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-white">Detail Monitoring Alat</CardTitle>
-                  <button onClick={() => setSelectedDevice(null)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+                  <CardTitle className="text-slate-900">Detail Monitoring Alat</CardTitle>
+                  <button onClick={() => setSelectedDevice(null)} className="text-slate-900 hover:text-gray-200 text-2xl">&times;</button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
@@ -212,7 +212,7 @@ export default function DeviceDayMonitoringPage() {
           ))}
         </div>
 
-        <Card className="mb-6 bg-slate-900/95 border-slate-800">
+        <Card className="mb-6 bg-white/95 border-slate-200">
           <CardContent className="pt-6">
             <DataTable
               columns={[ 

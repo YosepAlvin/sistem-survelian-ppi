@@ -46,6 +46,9 @@ coverage/
 *.sqlite
 *.db
 
+# User-uploaded files (may contain personal or patient data)
+public/uploads/
+
 # Docker
 .dockerignore
 

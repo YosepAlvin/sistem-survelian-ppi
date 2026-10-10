@@ -13,14 +13,14 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20 hover:bg-destructive/90 hover:shadow-destructive/30",
         outline:
-          "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-transparent dark:hover:bg-white/5 dark:hover:text-white",
+          "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-200 dark:bg-transparent dark:hover:bg-slate-50 dark:hover:text-slate-900",
         secondary:
-          "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
-        ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white",
+          "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-700",
+        ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-50 dark:hover:text-slate-900",
         link: "text-primary underline-offset-4 hover:underline",
-        premium: "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] border border-white/10",
-        success: "bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] border border-white/10",
-        purple: "bg-gradient-to-br from-purple-600 to-indigo-800 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] border border-white/10",
+        premium: "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] border border-slate-200",
+        success: "bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] border border-slate-200",
+        purple: "bg-gradient-to-br from-purple-600 to-indigo-800 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] border border-slate-200",
       },
       size: {
         default: "h-11 px-6 py-2.5",

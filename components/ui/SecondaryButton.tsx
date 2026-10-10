@@ -15,7 +15,7 @@ const SecondaryButton = React.forwardRef<HTMLButtonElement, SecondaryButtonProps
         "inline-flex items-center justify-center gap-2",
         "px-4 py-2.5 h-10 rounded-lg",
         "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-100 font-semibold text-sm",
-        "border border-gray-300 dark:border-slate-600",
+        "border border-gray-300 dark:border-slate-300",
         "transition-all duration-200",
         "hover:bg-gray-200 dark:hover:bg-slate-600 hover:shadow-sm",
         "active:scale-95",
@@ -27,7 +27,7 @@ const SecondaryButton = React.forwardRef<HTMLButtonElement, SecondaryButtonProps
     >
       {isLoading ? (
         <>
-          <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
           Loading...
         </>
       ) : (

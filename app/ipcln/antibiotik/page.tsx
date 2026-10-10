@@ -9,13 +9,18 @@ import { StatCard } from "@/components/ui/StatCard"
 import { FormField, FormInput, FormSelect, FormTextarea } from "@/components/ui/FormField"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { CrudModal } from "@/components/ui/CrudModal"
 import axios from "axios"
 import { exportMultiSheetExcel } from "@/lib/excel-export"
 import { STATUS_TOOLTIP } from "@/lib/antibiotik-status"
 import { useSession } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
+import {
+  AlertTriangle, ClipboardList, Plus, PencilLine, CheckCircle2, XCircle, CircleDot,
+  Pill, ShieldAlert, Eye, Clock, FileSpreadsheet
+} from 'lucide-react'
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// -- Types --------------------------------------------------------------------
 
 type ExecutiveSummary = {
   totalBulanIni: number
@@ -92,6 +97,7 @@ function AntibiotikPageContent() {
   const [loading, setLoading] = useState(true)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [selectedAB, setSelectedAB] = useState<AntibiotikData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<AntibiotikData | null>(null)
@@ -244,9 +250,9 @@ function AntibiotikPageContent() {
     setIsEditing(false)
   }, [])
 
-  const handleSave = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSave = useCallback(async () => {
     try {
+      setIsSaving(true)
       if (isEditing && formData.id) {
         await axios.put("/api/antibiotik", {
           ...formData,
@@ -263,6 +269,8 @@ function AntibiotikPageContent() {
     } catch (error: any) {
       console.error("Error saving:", error)
       showToast({ type: "error", title: "Gagal", message: error.response?.data?.error || error.message })
+    } finally {
+      setIsSaving(false)
     }
   }, [isEditing, formData, resetForm, fetchData, showToast])
 
@@ -385,30 +393,30 @@ function AntibiotikPageContent() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'AKTIF':
-        return 'bg-green-900/30 text-green-400 border border-green-800/50'
+        return 'bg-green-50 text-green-700 border border-green-200'
       case 'AKAN_SELESAI':
-        return 'bg-yellow-900/30 text-yellow-400 border border-yellow-800/50'
+        return 'bg-yellow-50 text-yellow-700 border border-yellow-200'
       case 'SELESAI':
-        return 'bg-gray-800 text-gray-400 border border-gray-700/50'
+        return 'bg-slate-100 text-slate-600 border border-slate-200'
       case 'OVERDUE':
-        return 'bg-red-900/30 text-red-400 border border-red-800/50'
+        return 'bg-red-50 text-red-700 border border-red-200'
       case 'PERLU_REVIEW':
-        return 'bg-purple-900/30 text-purple-400 border border-purple-800/50'
+        return 'bg-purple-50 text-purple-700 border border-purple-200'
       case 'SUDAH_DIREVIEW':
-        return 'bg-blue-900/30 text-blue-400 border border-blue-800/50'
+        return 'bg-blue-50 text-blue-700 border border-blue-200'
       default:
-        return 'bg-gray-800 text-gray-400 border border-gray-700/50'
+        return 'bg-slate-100 text-slate-600 border border-slate-200'
     }
   }
 
   const getHariKeColor = (hari_ke: number, isRestriksi: boolean) => {
     if (isRestriksi) {
-      if (hari_ke >7) return 'text-red-400 font-bold'
-      if (hari_ke >5) return 'text-yellow-400 font-bold'
+      if (hari_ke >7) return 'text-red-600 font-bold'
+      if (hari_ke >5) return 'text-yellow-600 font-bold'
     } else {
-      if (hari_ke >10) return 'text-red-400 font-bold'
+      if (hari_ke >10) return 'text-red-600 font-bold'
     }
-    return 'text-gray-300'
+    return 'text-slate-600'
   }
 
   const filteredData = dataList.filter(ab => {
@@ -475,7 +483,7 @@ function AntibiotikPageContent() {
       render: (v: string[]) => (
         <div className="text-xs">
           {v.map((alasan, i) => (
-            <span key={i} className="inline-block mr-1 mb-1 bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+            <span key={i} className="inline-block mr-1 mb-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
               {alasan}
             </span>
           ))}
@@ -493,7 +501,7 @@ function AntibiotikPageContent() {
         <div className="flex gap-2">
           <button 
             onClick={() => openDetailModal(row)}
-            className="text-purple-400 hover:text-purple-200 text-sm transition-colors"
+            className="text-purple-700 hover:text-purple-800 text-sm transition-colors"
           >
             Detail
           </button>
@@ -535,20 +543,15 @@ function AntibiotikPageContent() {
               onClick={() => setShowExportModal(true)}
               variant="outline"
             >
-              ⬇️ Export Excel
+              <FileSpreadsheet size={16} className="mr-2" /> Export Excel
             </Button>
             <Button 
               onClick={() => {
-                if (showForm) {
-                  setShowForm(false)
-                  resetForm()
-                } else {
-                  resetForm()
-                  setShowForm(true)
-                }
+                resetForm()
+                setShowForm(true)
               }}
             >
-              {showForm ? "Batal" : "Catat Antibiotik Baru"}
+              Catat Antibiotik Baru
             </Button>
           </div>
         }
@@ -557,38 +560,38 @@ function AntibiotikPageContent() {
       {/* Executive Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard
-          title="💊 Total Terapi Bulan Ini"
+          title="Total Terapi Bulan Ini"
           value={executiveSummary?.totalBulanIni ?? 0}
           description="Therapi aktif + selesai"
-          icon={<div className="text-green-400">💊</div>}
+          icon={<Pill size={22} />}
           color="blue"
         />
         <StatCard
-          title="🟣 Antibiotik Restriksi"
+          title="Antibiotik Restriksi"
           value={executiveSummary?.totalRestriksi ?? 0}
           description="Sedang dipantau"
-          icon={<div className="text-orange-400">⚠️</div>}
+          icon={<ShieldAlert size={22} />}
           color="purple"
         />
         <StatCard
-          title="🟡 Perlu Review"
+          title="Perlu Review"
           value={executiveSummary?.totalPerluReview ?? 0}
           description="Perlu evaluasi IPCN"
-          icon={<div className="text-yellow-400">🔍</div>}
+          icon={<Eye size={22} />}
           color="amber"
         />
         <StatCard
-          title="🔴 Overdue"
+          title="Overdue"
           value={executiveSummary?.totalOverdue ?? 0}
           description="Melewati tanggal selesai"
-          icon={<div className="text-red-400">⚠️</div>}
+          icon={<Clock size={22} />}
           color="red"
         />
         <StatCard
-          title="✅ Review Selesai"
+          title="Review Selesai"
           value={executiveSummary?.totalReviewSelesai ?? 0}
           description="Sudah direview IPCN"
-          icon={<div className="text-emerald-400">✔</div>}
+          icon={<CheckCircle2 size={22} />}
           color="green"
         />
       </div>
@@ -624,22 +627,25 @@ function AntibiotikPageContent() {
 
       {/* Alert Panel */}
       {perluReviewList.length > 0 && (
-        <Card className="mb-6 border-purple-800/50">
-          <CardHeader className="bg-purple-900/20 pb-3">
-            <CardTitle className="text-purple-300">⚠️ Membutuhkan Review IPCN</CardTitle>
+        <Card className="mb-6 border-purple-200">
+          <CardHeader className="bg-purple-50 pb-3">
+            <CardTitle className="text-purple-700 flex items-center gap-2.5">
+              <AlertTriangle size={18} className="text-purple-600" strokeWidth={2.3} />
+              Membutuhkan Review IPCN
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {perluReviewList.slice(0, 6).map(ab => (
                 <div key={ab.id} 
-                  className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700/50"
+                  className="bg-slate-50 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100"
                   onClick={() => openDetailModal(ab)}
                 >
-                  <div className="font-bold">{ab.pasien}</div>
-                  <div className="text-xs text-gray-400 mb-2">{ab.nama_ab} • Hari {ab.hari_ke}</div>
+                  <div className="font-bold text-slate-900">{ab.pasien}</div>
+                  <div className="text-xs text-slate-600 mb-2">{ab.nama_ab} • Hari {ab.hari_ke}</div>
                   <div className="flex flex-wrap gap-1">
                     {ab.alasan_review.map((alasan, i) => (
-                      <span key={i} className="text-xs bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded">
+                      <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">
                         {alasan}
                       </span>
                     ))}
@@ -694,10 +700,10 @@ function AntibiotikPageContent() {
           <Card className="max-w-2xl w-full max-h-[90vh] flex flex-col">
 
             {/* Modal Header */}
-            <CardHeader className="bg-purple-700 text-white p-4 flex-shrink-0">
+            <CardHeader className="bg-purple-700 text-slate-900 p-4 flex-shrink-0">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">Detail Penggunaan Antibiotik</CardTitle>
-                <button onClick={closeDetailModal} className="text-white hover:text-gray-200 text-2xl leading-none">&times;</button>
+                <CardTitle className="text-slate-900">Detail Penggunaan Antibiotik</CardTitle>
+                <button onClick={closeDetailModal} className="text-slate-900 hover:text-gray-200 text-2xl leading-none">&times;</button>
               </div>
               {/* Tab Navigation */}
               <div className="flex gap-1 mt-3">
@@ -706,7 +712,7 @@ function AntibiotikPageContent() {
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     detailTab === 'detail'
                       ? 'bg-white text-purple-700'
-                      : 'text-purple-200 hover:bg-purple-600'
+                      : 'text-purple-600 hover:bg-purple-100'
                   }`}
                 >
                   Data Terapi
@@ -719,7 +725,7 @@ function AntibiotikPageContent() {
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     detailTab === 'riwayat'
                       ? 'bg-white text-purple-700'
-                      : 'text-purple-200 hover:bg-purple-600'
+                      : 'text-purple-600 hover:bg-purple-100'
                   }`}
                 >
                   Riwayat Aktivitas
@@ -730,57 +736,57 @@ function AntibiotikPageContent() {
             {/* Scrollable Body */}
             <CardContent className="pt-6 overflow-y-auto flex-1">
 
-              {/* ── Tab: Data Terapi ── */}
+              {/* -- Tab: Data Terapi -- */}
               {detailTab === 'detail' && (
                 <>
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Nama Pasien</h4>
-                      <p className="font-medium">{selectedAB.pasien}</p>
+                      <h4 className="text-sm font-semibold text-slate-600 mb-1">Nama Pasien</h4>
+                      <p className="font-medium text-slate-900">{selectedAB.pasien}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-400 mb-1">No. RM</h4>
-                      <p>{selectedAB.no_rm}</p>
+                      <h4 className="text-sm font-semibold text-slate-600 mb-1">No. RM</h4>
+                      <p className="text-slate-900">{selectedAB.no_rm}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Ruangan</h4>
-                      <p>{selectedAB.ruangan}</p>
+                      <h4 className="text-sm font-semibold text-slate-600 mb-1">Ruangan</h4>
+                      <p className="text-slate-900">{selectedAB.ruangan}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-400 mb-1">Dokter Penanggung Jawab</h4>
-                      <p>{selectedAB.dokter || '-'}</p>
+                      <h4 className="text-sm font-semibold text-slate-600 mb-1">Dokter Penanggung Jawab</h4>
+                      <p className="text-slate-900">{selectedAB.dokter || '-'}</p>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-700 pt-4 mb-4">
-                    <h4 className="text-lg font-semibold mb-3">Data Terapi</h4>
+                  <div className="border-t border-slate-200 pt-4 mb-4">
+                    <h4 className="text-lg font-semibold mb-3 text-slate-900">Data Terapi</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Antibiotik</h4>
-                        <p className={selectedAB.is_restriksi ? 'font-bold text-orange-400' : 'font-medium'}>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Antibiotik</h4>
+                        <p className={selectedAB.is_restriksi ? 'font-bold text-orange-600' : 'font-medium text-slate-900'}>
                           {selectedAB.nama_ab}
                         </p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Dosis & Rute</h4>
-                        <p>{selectedAB.dosis} ({selectedAB.rute})</p>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Dosis & Rute</h4>
+                        <p className="text-slate-900">{selectedAB.dosis} ({selectedAB.rute})</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Mulai</h4>
-                        <p>{selectedAB.tgl_mulai}</p>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Tanggal Mulai</h4>
+                        <p className="text-slate-900">{selectedAB.tgl_mulai}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Tanggal Selesai</h4>
-                        <p>{selectedAB.tgl_selesai}</p>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Tanggal Selesai</h4>
+                        <p className="text-slate-900">{selectedAB.tgl_selesai}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Hari Ke</h4>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Hari Ke</h4>
                         <p className={getHariKeColor(selectedAB.hari_ke, selectedAB.is_restriksi)}>
                           {selectedAB.hari_ke}
                         </p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-1">Status</h4>
+                        <h4 className="text-sm font-semibold text-slate-600 mb-1">Status</h4>
                         <span
           title={STATUS_TOOLTIP[selectedAB.status as keyof typeof STATUS_TOOLTIP] || ''}
           className={`px-2 py-1 rounded-full text-xs font-semibold cursor-default ${getStatusBadgeColor(selectedAB.status)}`}
@@ -796,11 +802,11 @@ function AntibiotikPageContent() {
                   </div>
 
                   {selectedAB.alasan_review.length > 0 && (
-                    <div className="border-t border-gray-700 pt-4 mb-4">
-                      <h4 className="text-lg font-semibold mb-3">Alasan Review</h4>
+                    <div className="border-t border-slate-200 pt-4 mb-4">
+                      <h4 className="text-lg font-semibold mb-3 text-slate-900">Alasan Review</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedAB.alasan_review.map((alasan, i) => (
-                          <span key={i} className="bg-purple-900/30 text-purple-400 px-3 py-1 rounded text-sm">
+                          <span key={i} className="bg-purple-50 text-purple-700 px-3 py-1 rounded text-sm border border-purple-100">
                             {alasan}
                           </span>
                         ))}
@@ -808,8 +814,8 @@ function AntibiotikPageContent() {
                     </div>
                   )}
 
-                  <div className="border-t border-gray-700 pt-4">
-                    <h4 className="text-lg font-semibold mb-3">Review IPCN</h4>
+                  <div className="border-t border-slate-200 pt-4">
+                    <h4 className="text-lg font-semibold mb-3 text-slate-900">Review IPCN</h4>
                     <FormField label="Catatan IPCN">
                       <FormTextarea
                         placeholder="Masukkan catatan review..."
@@ -827,7 +833,7 @@ function AntibiotikPageContent() {
                       />
                     </FormField>
                     {selectedAB.tanggal_review && (
-                      <div className="mt-4 text-sm text-gray-400">
+                      <div className="mt-4 text-sm text-slate-600">
                         <p>Terakhir direview: {selectedAB.tanggal_review}</p>
                       </div>
                     )}
@@ -846,33 +852,35 @@ function AntibiotikPageContent() {
                 </>
               )}
 
-              {/* ── Tab: Riwayat Aktivitas ── */}
+              {/* -- Tab: Riwayat Aktivitas -- */}
               {detailTab === 'riwayat' && (
                 <div>
                   {auditLoading ? (
-                    <div className="flex items-center justify-center py-12 text-gray-400">
-                      <svg className="animate-spin h-5 w-5 mr-3 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <div className="flex items-center justify-center py-12 text-slate-600">
+                      <svg className="animate-spin h-5 w-5 mr-3 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
                       Memuat riwayat aktivitas...
                     </div>
                   ) : auditData.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                      <div className="text-4xl mb-3 opacity-30">📋</div>
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                      <ClipboardList size={40} strokeWidth={1.5} className="mb-3 opacity-30 text-slate-500" />
                       <p className="text-sm italic">Belum ada riwayat aktivitas.</p>
                     </div>
                   ) : (
-                    <div className="relative border-l-2 border-purple-800/50 ml-3 space-y-0">
+                    <div className="relative border-l-2 border-purple-200 ml-3 space-y-0">
                       {auditData.map((entry, idx) => {
-                        const actionMeta: Record<string, { label: string; color: string; icon: string }> = {
-                          ANTIBIOTIK_CREATE:  { label: 'Dibuat',          color: 'text-green-400',  icon: '✚' },
-                          ANTIBIOTIK_UPDATE:  { label: 'Diperbarui',      color: 'text-blue-400',   icon: '✎' },
-                          ANTIBIOTIK_SELESAI: { label: 'Ditandai Selesai',color: 'text-gray-400',   icon: '✔' },
-                          ANTIBIOTIK_REVIEW:  { label: 'Review IPCN',     color: 'text-purple-400', icon: '🔍' },
-                          ANTIBIOTIK_DELETE:  { label: 'Dihapus',         color: 'text-red-400',    icon: '✕' },
+                        const iconProps = { size: 15, strokeWidth: 2.3 }
+                        const actionMeta: Record<string, { label: string; color: string; icon: React.ComponentType<any> }> = {
+                          ANTIBIOTIK_CREATE:  { label: 'Dibuat',          color: 'text-emerald-700',   icon: Plus },
+                          ANTIBIOTIK_UPDATE:  { label: 'Diperbarui',      color: 'text-sky-700',       icon: PencilLine },
+                          ANTIBIOTIK_SELESAI: { label: 'Ditandai Selesai',color: 'text-slate-700',     icon: CheckCircle2 },
+                          ANTIBIOTIK_REVIEW:  { label: 'Review IPCN',     color: 'text-purple-700',    icon: CheckCircle2 },
+                          ANTIBIOTIK_DELETE:  { label: 'Dihapus',         color: 'text-rose-700',      icon: XCircle },
                         }
-                        const meta = actionMeta[entry.action] ?? { label: entry.action, color: 'text-gray-400', icon: '•' }
+                        const meta = actionMeta[entry.action] ?? { label: entry.action, color: 'text-slate-600', icon: CircleDot as React.ComponentType<any> }
+                        const MetaIcon = meta.icon
 
                         let prevParsed: any = null
                         let newParsed: any = null
@@ -895,19 +903,20 @@ function AntibiotikPageContent() {
                         return (
                           <div key={entry.id} className="relative pl-6 pb-6">
                             {/* Timeline dot */}
-                            <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-gray-900 border-2 border-purple-600 flex items-center justify-center text-[9px] text-purple-400 font-bold">
+                            <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-2 border-purple-600 flex items-center justify-center text-[9px] text-purple-600 font-bold">
                               {idx + 1}
                             </span>
 
-                            <div className="bg-gray-800/60 border border-gray-700/60 rounded-lg p-3">
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
                               {/* Header row */}
                               <div className="flex items-start justify-between gap-2 mb-1.5">
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-xs font-bold ${meta.color}`}>
-                                    {meta.icon} {meta.label}
+                                  <span className={`text-xs font-bold flex items-center gap-1.5 ${meta.color}`}>
+                                    <MetaIcon {...iconProps} />
+                                    {meta.label}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    oleh <span className="text-gray-300 font-medium">{entry.userName}</span>
+                                    oleh <span className="text-slate-700 font-medium">{entry.userName}</span>
                                   </span>
                                 </div>
                                 <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0">
@@ -920,17 +929,17 @@ function AntibiotikPageContent() {
                                 </span>
                               </div>
 
-                              {/* Previous → New values */}
+                              {/* Previous ? New values */}
                               {(prevText || newText) && (
                                 <div className="mt-2 space-y-1">
                                   {prevText && prevText !== 'Tidak ada perubahan terdeteksi' && (
-                                    <div className="text-[11px] bg-red-950/40 border border-red-900/40 rounded px-2 py-1 text-red-300">
-                                      <span className="font-semibold text-red-400">Sebelum: </span>{prevText}
-                                    </div>
+                                    <div className="text-[11px] bg-red-50 border border-red-200 rounded px-2 py-1 text-red-700">
+                                <span className="font-semibold text-red-800">Sebelum: </span>{prevText}
+                              </div>
                                   )}
                                   {newText && newText !== 'Tidak ada perubahan terdeteksi' && (
-                                    <div className="text-[11px] bg-green-950/40 border border-green-900/40 rounded px-2 py-1 text-green-300">
-                                      <span className="font-semibold text-green-400">Sesudah: </span>{newText}
+                                    <div className="text-[11px] bg-green-50 border border-green-200 rounded px-2 py-1 text-green-700">
+                                      <span className="font-semibold text-green-800">Sesudah: </span>{newText}
                                     </div>
                                   )}
                                 </div>
@@ -957,10 +966,10 @@ function AntibiotikPageContent() {
       {showExportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-lg w-full">
-            <CardHeader className="bg-purple-700 text-white p-4">
+            <CardHeader className="bg-purple-700 text-slate-900 p-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">Export Laporan Antibiotik</CardTitle>
-                <button onClick={() => setShowExportModal(false)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+                <CardTitle className="text-slate-900">Export Laporan Antibiotik</CardTitle>
+                <button onClick={() => setShowExportModal(false)} className="text-slate-900 hover:text-gray-200 text-2xl">&times;</button>
               </div>
             </CardHeader>
             <CardContent className="pt-6">
@@ -1030,119 +1039,99 @@ function AntibiotikPageContent() {
         </div>
       )}
 
-      {/* Form Card */}
-      {showForm && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-purple-300">{isEditing ? "Edit Data Antibiotik" : "Form Penggunaan Antibiotik"}</CardTitle>
-            <CardDescription>Isi form di bawah untuk {isEditing ? "memperbarui" : "menambah"} penggunaan antibiotik</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormField label="No. RM Pasien" required>
-                <FormSelect
-                  value={formData.no_rm}
-                  onChange={(e) => handleNoRmChange(e.target.value)}
-                >
-                  <option value="">Pilih Pasien...</option>
-                  {pasienList.map(pasien => (
-                    <option key={pasien.id} value={pasien.no_rm}>
-                      {pasien.no_rm} - {pasien.nama} ({pasien.ruangan})
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormField>
-              <FormField label="Nama Pasien" required>
-                <FormInput 
-                  placeholder="Nama Pasien" 
-                  value={formData.pasien}
-                  onChange={e => setFormData({...formData, pasien: e.target.value})}
-                  required
-                />
-              </FormField>
-              <FormField label="Nama Antibiotik" required>
-                <FormSelect 
-                  value={formData.nama_ab}
-                  onChange={e => setFormData({...formData, nama_ab: e.target.value})}
-                  required
-                >
-                  <option value="">Pilih Antibiotik...</option>
-                  {masterAntibiotik.map(ab => (
-                    <option key={ab.id} value={ab.nama}>
-                      {ab.nama} {ab.is_restriksi ? '(Restriksi)' : ''}
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormField>
-              <FormField label="Dosis & Rute" required>
-                <FormInput 
-                  placeholder="Contoh: 2x1 gr IV" 
-                  value={formData.dosis}
-                  onChange={e => setFormData({...formData, dosis: e.target.value})}
-                  required
-                />
-              </FormField>
-              <FormField label="Tanggal Mulai" required>
-                <FormInput 
-                  type="date"
-                  value={formData.tgl_mulai}
-                  onChange={e => setFormData({...formData, tgl_mulai: e.target.value})}
-                  required
-                />
-              </FormField>
-              <FormField label="Tanggal Selesai (opsional)">
-                <FormInput 
-                  type="date"
-                  value={formData.tgl_selesai}
-                  onChange={e => setFormData({...formData, tgl_selesai: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Antibiotik Ke-" required>
-                <FormInput 
-                  type="number"
-                  placeholder="1 / 2 / 3" 
-                  value={formData.ke || ''}
-                  onChange={e => setFormData({...formData, ke: e.target.value ? parseInt(e.target.value) : 1})}
-                  required
-                />
-              </FormField>
-              <FormField label="Efek Samping (opsional)">
-                <FormSelect 
-                  value={formData.efek_samping}
-                  onChange={e => setFormData({...formData, efek_samping: e.target.value})}
-                >
-                  <option value="">Tidak Ada</option>
-                  <option value="Mual">Mual</option>
-                  <option value="Muntah">Muntah</option>
-                  <option value="Diare">Diare</option>
-                  <option value="Ruam">Ruam</option>
-                  <option value="Gangguan Ginjal">Gangguan Ginjal</option>
-                  <option value="Gangguan Hati">Gangguan Hati</option>
-                  <option value="Lainnya">Lainnya</option>
-                </FormSelect>
-              </FormField>
-              <div className="md:col-span-2 lg:col-span-3 pt-2 flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowForm(false)
-                    resetForm()
-                  }}
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 flex-1"
-                >
-                  {isEditing ? "Perbarui Data" : "Simpan Data Antibiotik"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      {/* CRUD Modal */}
+      <CrudModal
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false)
+          setIsEditing(false)
+          resetForm()
+        }}
+        title={isEditing ? "Edit Data Antibiotik" : "Form Penggunaan Antibiotik"}
+        loading={isSaving}
+        onSubmit={handleSave}
+        submitLabel={isEditing ? "Perbarui Data" : "Simpan Data Antibiotik"}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <FormField label="No. RM Pasien" required>
+            <FormSelect
+              value={formData.no_rm}
+              onChange={(e) => handleNoRmChange(e.target.value)}
+            >
+              <option value="">Pilih Pasien...</option>
+              {pasienList.map(pasien => (
+                <option key={pasien.id} value={pasien.no_rm}>
+                  {pasien.no_rm} - {pasien.nama} ({pasien.ruangan})
+                </option>
+              ))}
+            </FormSelect>
+          </FormField>
+          <FormField label="Nama Pasien" required>
+            <FormInput 
+              placeholder="Nama Pasien" 
+              value={formData.pasien}
+              onChange={e => setFormData({...formData, pasien: e.target.value})}
+            />
+          </FormField>
+          <FormField label="Nama Antibiotik" required>
+            <FormSelect 
+              value={formData.nama_ab}
+              onChange={e => setFormData({...formData, nama_ab: e.target.value})}
+            >
+              <option value="">Pilih Antibiotik...</option>
+              {masterAntibiotik.map(ab => (
+                <option key={ab.id} value={ab.nama}>
+                  {ab.nama} {ab.is_restriksi ? '(Restriksi)' : ''}
+                </option>
+              ))}
+            </FormSelect>
+          </FormField>
+          <FormField label="Dosis & Rute" required>
+            <FormInput 
+              placeholder="Contoh: 2x1 gr IV" 
+              value={formData.dosis}
+              onChange={e => setFormData({...formData, dosis: e.target.value})}
+            />
+          </FormField>
+          <FormField label="Tanggal Mulai" required>
+            <FormInput 
+              type="date"
+              value={formData.tgl_mulai}
+              onChange={e => setFormData({...formData, tgl_mulai: e.target.value})}
+            />
+          </FormField>
+          <FormField label="Tanggal Selesai (opsional)">
+            <FormInput 
+              type="date"
+              value={formData.tgl_selesai}
+              onChange={e => setFormData({...formData, tgl_selesai: e.target.value})}
+            />
+          </FormField>
+          <FormField label="Antibiotik Ke-" required>
+            <FormInput 
+              type="number"
+              placeholder="1 / 2 / 3" 
+              value={formData.ke || ''}
+              onChange={e => setFormData({...formData, ke: e.target.value ? parseInt(e.target.value) : 1})}
+            />
+          </FormField>
+          <FormField label="Efek Samping (opsional)">
+            <FormSelect 
+              value={formData.efek_samping}
+              onChange={e => setFormData({...formData, efek_samping: e.target.value})}
+            >
+              <option value="">Tidak Ada</option>
+              <option value="Mual">Mual</option>
+              <option value="Muntah">Muntah</option>
+              <option value="Diare">Diare</option>
+              <option value="Ruam">Ruam</option>
+              <option value="Gangguan Ginjal">Gangguan Ginjal</option>
+              <option value="Gangguan Hati">Gangguan Hati</option>
+              <option value="Lainnya">Lainnya</option>
+            </FormSelect>
+          </FormField>
+        </div>
+      </CrudModal>
 
       {/* Data Table */}
       <Card>

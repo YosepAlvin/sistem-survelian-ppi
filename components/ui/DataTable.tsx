@@ -93,12 +93,12 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
 
     if (loading) {
       return (
-        <div className={cn("w-full overflow-hidden rounded-[2rem] border border-white/5 bg-[#172033]/50 p-6", className)}>
+        <div className={cn("w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6", className)}>
           <div className="space-y-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex gap-4">
                 {Array.from({ length: 4 }).map((_, j) => (
-                  <div key={j} className="h-10 bg-white/5 rounded-xl animate-pulse flex-1" />
+                  <div key={j} className="h-10 bg-slate-100 rounded-xl animate-pulse flex-1" />
                 ))}
               </div>
             ))}
@@ -110,11 +110,11 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
     if (!data || data.length === 0) {
       return (
         <div className={cn(
-          "w-full flex flex-col items-center justify-center py-20 rounded-[2rem] border border-white/5 bg-[#172033]/50 text-slate-500",
+          "w-full flex flex-col items-center justify-center py-20 rounded-[2rem] border border-slate-200 bg-white text-slate-600",
           className
         )}>
-          <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-4 border border-white/5">
-            <Inbox size={24} className="opacity-20" />
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center mb-4 border border-slate-200">
+            <Inbox size={24} className="opacity-50 text-slate-600" />
           </div>
           <p className="font-bold uppercase tracking-widest text-[10px]">{emptyMessage}</p>
         </div>
@@ -122,10 +122,10 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
     }
 
     return (
-      <div ref={ref} className={cn("w-full overflow-hidden rounded-[2rem] border border-white/5 bg-[#172033]/50 backdrop-blur-xl shadow-2xl shadow-black/20", className)}>
+      <div ref={ref} className={cn("w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white backdrop-blur-xl shadow-2xl shadow-slate-200/50", className)}>
         {/* Search Bar */}
         {searchable && (
-          <div className="p-6 border-b border-white/5">
+          <div className="p-6 border-b border-slate-200">
             <div className="relative">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
@@ -136,7 +136,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-12 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-12 py-3 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               />
             </div>
             {searchQuery && (
@@ -147,20 +147,20 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
           </div>
         )}
         
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className={cn(
-                "bg-white/5 border-b border-white/5 transition-colors",
+                "bg-slate-50 border-b border-slate-200 transition-colors",
                 stickyHeader && "sticky top-0 z-10"
               )}>
                 {columns.map((column) => (
                   <th
                     key={String(column.key)}
                     className={cn(
-                      "px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500",
+                      "px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-600",
                       "whitespace-nowrap select-none group",
-                      column.sortable && "cursor-pointer hover:text-white transition-colors",
+                      column.sortable && "cursor-pointer hover:text-slate-900 transition-colors",
                       column.className
                     )}
                     onClick={() => column.sortable && handleSort(String(column.key))}
@@ -178,13 +178,13 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200">
               {paginatedData.map((row, index) => (
                 <tr
                   key={index}
                   className={cn(
-                    "group transition-all duration-300 hover:bg-white/5",
-                    onRowClick && "cursor-pointer active:bg-white/10"
+                    "group transition-all duration-300 hover:bg-slate-50",
+                    onRowClick && "cursor-pointer active:bg-slate-100"
                   )}
                   onClick={() => onRowClick?.(row)}
                 >
@@ -192,7 +192,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
                     <td
                       key={String(column.key)}
                       className={cn(
-                        "px-8 py-5 text-slate-300 font-medium group-hover:text-white transition-colors",
+                        "px-8 py-5 text-slate-700 font-medium group-hover:text-slate-900 transition-colors",
                         column.className
                       )}
                     >
@@ -207,15 +207,15 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
 
         {/* Pagination */}
         {paginated && totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 border-t border-white/5">
-            <p className="text-sm text-slate-500">
+          <div className="flex items-center justify-between px-8 py-6 border-t border-slate-200">
+            <p className="text-sm text-slate-600">
               Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} records
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -227,8 +227,8 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
                     className={cn(
                       "w-10 h-10 rounded-lg text-sm font-semibold transition-all",
                       currentPage === page
-                        ? "bg-primary text-white"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10"
+                        ? "bg-primary text-slate-900"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >
                     {page}
@@ -238,7 +238,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps<any>>(
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={18} />
               </button>

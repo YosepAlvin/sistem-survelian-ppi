@@ -248,7 +248,7 @@ export async function PUT(req: Request) {
         data: {
           type: "ANTIBIOTIK_DIREVIEW",
           category: "antibiotik",
-          title: "✅ Review Antibiotik Baru",
+          title: "Review Antibiotik Baru",
           message: `${existing.antibiotik?.nama} pasien ${existing.rawat_inap?.pasien?.nama} telah direview oleh IPCN.`,
           relatedEntityType: "PenggunaanAntibiotik",
           relatedEntityId: existing.id,

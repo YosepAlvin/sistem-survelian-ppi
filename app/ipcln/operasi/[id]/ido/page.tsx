@@ -105,7 +105,7 @@ export default function LaporIDOPage({ params }: { params: Promise<{ id: string 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         {/* Info Operasi */}
         <Card className="md:col-span-1 h-fit">
-          <CardHeader className="bg-slate-900 text-white p-4">
+          <CardHeader className="bg-blue-50 text-slate-900 p-4">
             <CardTitle className="text-sm uppercase">Data Operasi</CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3 text-sm">

@@ -62,44 +62,44 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle2 size={20} className="text-emerald-400" />
+        return <CheckCircle2 size={20} className="text-emerald-600" />
       case 'error':
-        return <XCircle size={20} className="text-red-400" />
+        return <XCircle size={20} className="text-red-600" />
       case 'warning':
-        return <AlertCircle size={20} className="text-amber-400" />
+        return <AlertCircle size={20} className="text-amber-600" />
       case 'info':
       default:
-        return <AlertCircle size={20} className="text-blue-400" />
+        return <AlertCircle size={20} className="text-blue-600" />
     }
   }
 
   const getBorderColor = () => {
     switch (toast.type) {
       case 'success':
-        return 'border-emerald-500/30'
+        return 'border-emerald-200'
       case 'error':
-        return 'border-red-500/30'
+        return 'border-red-200'
       case 'warning':
-        return 'border-amber-500/30'
+        return 'border-amber-200'
       case 'info':
       default:
-        return 'border-blue-500/30'
+        return 'border-blue-200'
     }
   }
 
   return (
     <div className={cn(
-      'bg-slate-900 border rounded-2xl p-4 shadow-2xl shadow-black/40 flex items-start gap-3 min-w-[320px] animate-fade-in-up',
+      'bg-white border rounded-2xl p-4 shadow-2xl shadow-slate-200/50 flex items-start gap-3 min-w-[320px] animate-fade-in-up',
       getBorderColor()
     )}>
       {getIcon()}
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-white text-sm">{toast.title}</p>
-        {toast.message && <p className="text-slate-400 text-xs mt-1">{toast.message}</p>}
+        <p className="font-bold text-slate-900 text-sm">{toast.title}</p>
+        {toast.message && <p className="text-slate-600 text-xs mt-1">{toast.message}</p>}
       </div>
       <button
         onClick={() => onRemove(toast.id)}
-        className="text-slate-400 hover:text-white transition-colors"
+        className="text-slate-500 hover:text-slate-700 transition-colors"
       >
         <X size={16} />
       </button>

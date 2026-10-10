@@ -14,6 +14,7 @@ import { Plus, Eye, Trash2, Edit2, Download, Upload } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { CrudModal } from "@/components/ui/CrudModal"
 import axios from "axios"
 import { readExcelFile, generateTemplate } from "@/lib/excel-import"
 
@@ -28,10 +29,11 @@ export default function RuanganPage() {
   const { showToast } = useToast()
   const [ruanganList, setRuanganList] = useState<Ruangan[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [selectedRuangan, setSelectedRuangan] = useState<Ruangan | null>(null)
   const [editingRuangan, setEditingRuangan] = useState<Ruangan | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [ruanganToDelete, setRuanganToDelete] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     nama: '',
@@ -59,8 +61,30 @@ export default function RuanganPage() {
     fetchRuangan()
   }, [fetchRuangan])
 
+  const handleOpenModal = (ruangan?: Ruangan) => {
+    if (ruangan) {
+      setEditingRuangan(ruangan)
+      setFormData({
+        nama: ruangan.nama,
+        kode: ruangan.kode,
+        kategori: ruangan.kategori
+      })
+    } else {
+      setEditingRuangan(null)
+      setFormData({ nama: '', kode: '', kategori: 'RANAP' })
+    }
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditingRuangan(null)
+    setFormData({ nama: '', kode: '', kategori: 'RANAP' })
+  }
+
   const handleSaveRuangan = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     try {
       if (editingRuangan) {
         await axios.put("/api/admin/ruangan", {
@@ -80,9 +104,7 @@ export default function RuanganPage() {
           message: `Ruangan ${formData.nama} berhasil ditambahkan.`
         })
       }
-      setShowForm(false)
-      setEditingRuangan(null)
-      setFormData({ nama: '', kode: '', kategori: 'RANAP' })
+      handleCloseModal()
       fetchRuangan()
     } catch (err: any) {
       showToast({
@@ -90,17 +112,9 @@ export default function RuanganPage() {
         title: editingRuangan ? 'Gagal Memperbarui' : 'Gagal Menyimpan',
         message: err.response?.data?.error || err.message
       })
+    } finally {
+      setIsSubmitting(false)
     }
-  }
-
-  const handleEditRuangan = (ruangan: Ruangan) => {
-    setEditingRuangan(ruangan)
-    setFormData({
-      nama: ruangan.nama,
-      kode: ruangan.kode,
-      kategori: ruangan.kategori
-    })
-    setShowForm(true)
   }
 
   const handleDelete = async () => {
@@ -162,9 +176,9 @@ export default function RuanganPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Master Data Ruangan"
             description="Kelola data ruangan dan kategori unit pelayanan"
@@ -197,77 +211,14 @@ export default function RuanganPage() {
                   </Button>
                 </label>
                 <PrimaryButton
-                  onClick={() => {
-                    setEditingRuangan(null)
-                    setFormData({ nama: '', kode: '', kategori: 'RANAP' })
-                    setShowForm(!showForm)
-                  }}
+                  onClick={() => handleOpenModal()}
                   icon={<Plus size={18} />}
                 >
-                  {showForm ? "Batal" : "Tambah Ruangan"}
+                  Tambah Ruangan
                 </PrimaryButton>
               </div>
             }
           />
-
-          {showForm && (
-            <Card className="mb-8 border-blue-800 bg-blue-950/30 mt-6">
-              <CardHeader>
-                <CardTitle className="text-white">{editingRuangan ? "Edit Ruangan" : "Tambah Ruangan Baru"}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveRuangan} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField label="Nama Ruangan" required>
-                      <FormInput
-                        type="text"
-                        placeholder="Contoh: Bangsal Anggrek"
-                        value={formData.nama}
-                        onChange={e => setFormData({...formData, nama: e.target.value})}
-                        required
-                        className="bg-slate-950 border-slate-700 text-white placeholder-slate-400"
-                      />
-                    </FormField>
-
-                    <FormField label="Kode Ruangan" required>
-                      <FormInput
-                        type="text"
-                        placeholder="Contoh: ANG"
-                        value={formData.kode}
-                        onChange={e => setFormData({...formData, kode: e.target.value})}
-                        required
-                        className="bg-slate-950 border-slate-700 text-white placeholder-slate-400"
-                      />
-                    </FormField>
-
-                    <FormField label="Kategori" required>
-                      <FormSelect
-                        value={formData.kategori}
-                        onChange={e => setFormData({...formData, kategori: e.target.value})}
-                        className="bg-slate-950 border-slate-700 text-white"
-                      >
-                        <option value="RANAP">Rawat Inap</option>
-                        <option value="INTENSIF">Intensif (ICU/NICU)</option>
-                        <option value="KHUSUS">Khusus (IGD/OK)</option>
-                      </FormSelect>
-                    </FormField>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <SecondaryButton onClick={() => {
-                      setShowForm(false)
-                      setEditingRuangan(null)
-                    }} className="bg-slate-700 hover:bg-slate-600">
-                      Batal
-                    </SecondaryButton>
-                    <PrimaryButton type="submit" className="bg-blue-600 hover:bg-blue-700">
-                      {editingRuangan ? "Perbarui Ruangan" : "Simpan Ruangan"}
-                    </PrimaryButton>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
 
           {loading ? (
             <LoadingSkeleton />
@@ -277,9 +228,9 @@ export default function RuanganPage() {
               description="Mulai dengan menambahkan ruangan baru untuk unit pelayanan Anda"
             />
           ) : (
-            <Card className="mt-6 border-slate-800 bg-slate-900/95">
+            <Card className="mt-6 border-slate-200 bg-white/95">
               <CardHeader>
-                <CardTitle className="text-white">Daftar Ruangan ({ruanganList.length})</CardTitle>
+                <CardTitle className="text-slate-900">Daftar Ruangan ({ruanganList.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -288,20 +239,20 @@ export default function RuanganPage() {
                       key: 'nama',
                       label: 'Nama Ruangan',
                       sortable: true,
-                      className: 'text-slate-100'
+                      className: 'text-slate-900'
                     },
                     {
                       key: 'kode',
                       label: 'Kode',
                       render: (value) => (
-                        <span className="font-mono text-sm text-blue-400">{value}</span>
+                        <span className="font-mono text-sm text-blue-600">{value}</span>
                       )
                     },
                     {
                       key: 'kategori',
                       label: 'Kategori',
                       render: (value) => (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-300 border border-blue-500/20">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                           {value === 'RANAP' ? 'Rawat Inap' : value === 'INTENSIF' ? 'Intensif' : 'Khusus'}
                         </span>
                       )
@@ -314,10 +265,10 @@ export default function RuanganPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleEditRuangan(row)}
+                            onClick={() => handleOpenModal(row)}
                             title="Edit Ruangan"
                             aria-label="Edit Ruangan"
-                            className="text-slate-300 hover:text-white hover:bg-slate-800"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                           >
                             <Edit2 size={16} />
                           </Button>
@@ -327,7 +278,7 @@ export default function RuanganPage() {
                             onClick={() => setSelectedRuangan(row)}
                             title="Lihat detail"
                             aria-label="Lihat detail"
-                            className="text-slate-300 hover:text-white hover:bg-slate-800"
+                            className="text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                           >
                             <Eye size={16} />
                           </Button>
@@ -337,7 +288,7 @@ export default function RuanganPage() {
                             onClick={() => setRuanganToDelete(value)}
                             title="Hapus"
                             aria-label="Hapus"
-                            className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
                           >
                             <Trash2 size={16} />
                           </Button>
@@ -356,6 +307,52 @@ export default function RuanganPage() {
             </Card>
           )}
 
+          <CrudModal
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            title={editingRuangan ? "Edit Ruangan" : "Tambah Ruangan Baru"}
+            loading={isSubmitting}
+            onSubmit={handleSaveRuangan}
+          >
+            <form id="crud-form" onSubmit={handleSaveRuangan} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField label="Nama Ruangan" required>
+                  <FormInput
+                    type="text"
+                    placeholder="Contoh: Bangsal Anggrek"
+                    value={formData.nama}
+                    onChange={e => setFormData({...formData, nama: e.target.value})}
+                    required
+                    className="bg-white border-slate-200 text-slate-900 placeholder-slate-500"
+                  />
+                </FormField>
+
+                <FormField label="Kode Ruangan" required>
+                  <FormInput
+                    type="text"
+                    placeholder="Contoh: ANG"
+                    value={formData.kode}
+                    onChange={e => setFormData({...formData, kode: e.target.value})}
+                    required
+                    className="bg-white border-slate-200 text-slate-900 placeholder-slate-500"
+                  />
+                </FormField>
+
+                <FormField label="Kategori" required>
+                  <FormSelect
+                    value={formData.kategori}
+                    onChange={e => setFormData({...formData, kategori: e.target.value})}
+                    className="bg-white border-slate-200 text-slate-900"
+                  >
+                    <option value="RANAP">Rawat Inap</option>
+                    <option value="INTENSIF">Intensif (ICU/NICU)</option>
+                    <option value="KHUSUS">Khusus (IGD/OK)</option>
+                  </FormSelect>
+                </FormField>
+              </div>
+            </form>
+          </CrudModal>
+
           <ConfirmDialog
             open={!!ruanganToDelete}
             title="Hapus Data Ruangan"
@@ -369,36 +366,36 @@ export default function RuanganPage() {
 
           {selectedRuangan && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-              <Card className="max-w-md w-full overflow-hidden animate-slide-down bg-slate-900 border-slate-800">
-                <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                  <CardTitle className="text-white flex justify-between items-center">
+              <Card className="max-w-md w-full overflow-hidden animate-slide-down bg-white border-slate-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border-b border-blue-200">
+                  <CardTitle className="text-blue-800 flex justify-between items-center">
                     Detail Ruangan
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedRuangan(null)} aria-label="Tutup" className="text-white hover:bg-white/10">×</Button>
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedRuangan(null)} aria-label="Tutup" className="text-blue-800 hover:bg-blue-100">×</Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-6">
-                  <div className="flex flex-col items-center pb-4 border-b border-slate-700">
-                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-300 font-bold text-xl mb-3 border border-blue-500/30">
+                  <div className="flex flex-col items-center pb-4 border-b border-slate-200">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xl mb-3 border border-blue-200">
                       {selectedRuangan.kode}
                     </div>
-                    <h3 className="text-lg font-bold text-white">{selectedRuangan.nama}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">{selectedRuangan.nama}</h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Kode</p>
-                      <p className="font-bold text-blue-300">{selectedRuangan.kode}</p>
+                      <p className="text-xs text-slate-600 mb-1">Kode</p>
+                      <p className="font-bold text-blue-700">{selectedRuangan.kode}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Kategori</p>
-                      <p className="font-bold text-white">
+                      <p className="text-xs text-slate-600 mb-1">Kategori</p>
+                      <p className="font-bold text-slate-900">
                         {selectedRuangan.kategori === 'RANAP' ? 'Rawat Inap' : selectedRuangan.kategori === 'INTENSIF' ? 'Intensif' : 'Khusus'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-4 border-t border-slate-700">
-                    <SecondaryButton onClick={() => setSelectedRuangan(null)} className="bg-slate-700 hover:bg-slate-600">
+                  <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
+                    <SecondaryButton onClick={() => setSelectedRuangan(null)} className="bg-slate-200 hover:bg-slate-300">
                       Tutup
                     </SecondaryButton>
                   </div>

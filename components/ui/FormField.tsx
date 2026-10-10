@@ -14,7 +14,7 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
     <div ref={ref} className="space-y-2.5 animate-fade-in-up">
       {label && (
         <label className={cn(
-          "block text-sm font-bold tracking-tight text-slate-700 dark:text-slate-300",
+          "block text-sm font-bold tracking-tight text-slate-700 dark:text-slate-700",
           required && "after:content-['*'] after:text-red-500 after:ml-1"
         )}>
           {label}
@@ -29,7 +29,7 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
           {error}
         </p>
       ) : helperText ? (
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
+        <p className="text-xs text-slate-500 dark:text-slate-600 font-medium mt-1.5">
           {helperText}
         </p>
       ) : null}
@@ -40,11 +40,11 @@ FormField.displayName = "FormField"
 
 const inputStyles = cn(
   "w-full px-4 py-3 rounded-xl transition-all duration-300 outline-none",
-  "border border-slate-200 dark:border-slate-800",
-  "bg-white dark:bg-slate-900/50",
-  "text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500",
+  "border border-slate-200 dark:border-slate-200",
+  "bg-white dark:bg-slate-50",
+  "text-slate-900 dark:text-slate-900 placeholder-slate-500 dark:placeholder-slate-500",
   "focus:ring-4 focus:ring-primary/10 focus:border-primary/50 dark:focus:ring-primary/20",
-  "disabled:bg-slate-50 dark:disabled:bg-slate-900/80 disabled:text-slate-400 disabled:cursor-not-allowed"
+  "disabled:bg-slate-50 dark:disabled:bg-white/80 disabled:text-slate-600 disabled:cursor-not-allowed"
 )
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -60,7 +60,8 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         error && "border-red-500/50 focus:ring-red-500/10 focus:border-red-500",
         className
       )}
-      {...props}
+      value={props.value ?? ""}
+      {...Object.fromEntries(Object.entries(props).filter(([key]) => key !== "value"))}
     />
   )
 )
@@ -80,7 +81,8 @@ const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
         error && "border-red-500/50 focus:ring-red-500/10 focus:border-red-500",
         className
       )}
-      {...props}
+      value={props.value ?? ""}
+      {...Object.fromEntries(Object.entries(props).filter(([key]) => key !== "value"))}
     />
   )
 )
@@ -100,7 +102,8 @@ const FormTextarea = React.forwardRef<HTMLTextAreaElement, FormTextareaProps>(
         error && "border-red-500/50 focus:ring-red-500/10 focus:border-red-500",
         className
       )}
-      {...props}
+      value={props.value ?? ""}
+      {...Object.fromEntries(Object.entries(props).filter(([key]) => key !== "value"))}
     />
   )
 )

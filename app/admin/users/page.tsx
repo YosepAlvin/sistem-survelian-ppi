@@ -14,6 +14,7 @@ import axios from 'axios'
 import { fetcher } from '@/lib/fetcher'
 import { readExcelFile, generateTemplate } from "@/lib/excel-import"
 import { Button } from '@/components/ui/button'
+import { CrudModal } from '@/components/ui/CrudModal'
 
 type User = {
   id: string;
@@ -30,7 +31,7 @@ export default function UsersPage() {
   const { data: roles } = useSWR<any[]>('/api/admin/roles', fetcher)
   const { data: ruangan } = useSWR<any[]>('/api/admin/ruangan', fetcher)
 
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,6 +42,29 @@ export default function UsersPage() {
     ruanganId: '',
     password: ''
   })
+
+  const handleOpenModal = (user?: User) => {
+    if (user) {
+      setEditingUser(user)
+      setFormData({
+        nama: user.nama,
+        email: user.email,
+        role: user.role,
+        ruanganId: user.ruangan?.id || '',
+        password: ''
+      })
+    } else {
+      setEditingUser(null)
+      setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
+    }
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditingUser(null)
+    setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
+  }
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,9 +89,7 @@ export default function UsersPage() {
         })
       }
       mutateUsers()
-      setShowForm(false)
-      setEditingUser(null)
-      setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
+      handleCloseModal()
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -104,18 +126,6 @@ export default function UsersPage() {
 
   const openUserDetail = (user: User) => {
     setSelectedUser(user)
-  }
-
-  const openEditUser = (user: User) => {
-    setEditingUser(user)
-    setFormData({
-      nama: user.nama,
-      email: user.email,
-      role: user.role,
-      ruanganId: user.ruangan?.id || '',
-      password: ''
-    })
-    setShowForm(true)
   }
 
   const handleDownloadTemplate = () => {
@@ -189,26 +199,113 @@ export default function UsersPage() {
               </Button>
             </label>
             <PrimaryButton
-              onClick={() => {
-                setEditingUser(null)
-                setFormData({ nama: '', email: '', role: 'IPCLN', ruanganId: '', password: '' })
-                setShowForm(!showForm)
-              }}
+              onClick={() => handleOpenModal()}
               icon={<Plus size={18} />}
             >
-              {showForm ? "Batal" : "Tambah User"}
+              Tambah User
             </PrimaryButton>
           </div>
         }
       />
 
-      {showForm && (
-        <Card className="mb-8 border-purple-200 bg-slate-900">
-          <CardHeader>
-            <CardTitle>{editingUser ? "Edit User" : "Tambah User Baru"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddUser} className="space-y-4">
+      <Card className="bg-white border-slate-200">
+        <CardHeader>
+          <CardTitle className="text-slate-900">Daftar User ({users.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={[
+              {
+                key: 'nama',
+                label: 'Nama',
+                sortable: true,
+              },
+              {
+                key: 'email',
+                label: 'Email',
+                sortable: true,
+              },
+              {
+                key: 'role',
+                label: 'Role',
+                render: (value) => {
+                  const colors: any = {
+                    ADMIN: 'bg-blue-50 text-blue-700 border-blue-200',
+                    IPCN: 'bg-green-50 text-green-700 border-green-200',
+                    IPCLN: 'bg-purple-50 text-purple-700 border-purple-200',
+                  }
+                  return (
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${colors[value] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                      {value}
+                    </span>
+                  )
+                }
+              },
+              {
+                      key: 'ruangan',
+                      label: 'Ruangan',
+                      render: (value) => value?.nama || '-'
+                    },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (value) => (
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                    value === 'Aktif'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-50 text-slate-600 border border-slate-200'
+                  }`}>
+                    {value}
+                  </span>
+                )
+              },
+              {
+                key: 'id',
+                label: 'Aksi',
+                render: (value, row: User) => (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleStatus(value, row.status)}
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 hover:text-slate-900 transition-colors"
+                      title={row.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
+                    >
+                      <ToggleRight size={18} className={row.status === 'Aktif' ? 'text-emerald-700' : 'text-slate-600'} />
+                    </button>
+                    <button
+                      onClick={() => handleOpenModal(row)}
+                      className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-800 transition-colors"
+                      title="Edit User"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => openUserDetail(row)}
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 hover:text-slate-900 transition-colors"
+                      title="Lihat Detail"
+                    >
+                      <Eye size={18} />
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={users}
+            searchable
+            searchPlaceholder="Cari Nama, Email, atau Role..."
+            paginated
+            pageSize={10}
+          />
+        </CardContent>
+      </Card>
+
+      <CrudModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title={editingUser ? "Edit User" : "Tambah User Baru"}
+        loading={isSubmitting}
+        onSubmit={handleAddUser}
+      >
+        <form id="crud-form" onSubmit={handleAddUser} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label="Nama Lengkap" required>
                   <FormInput
@@ -263,139 +360,40 @@ export default function UsersPage() {
                   />
                 </FormField>
               </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <SecondaryButton onClick={() => {
-                  setShowForm(false)
-                  setEditingUser(null)
-                }}>
-                  Batal
-                </SecondaryButton>
-                <PrimaryButton type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Menyimpan..." : editingUser ? "Perbarui User" : "Simpan User"}
-                </PrimaryButton>
-              </div>
             </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-white">Daftar User ({users.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={[
-              {
-                key: 'nama',
-                label: 'Nama',
-                sortable: true,
-              },
-              {
-                key: 'email',
-                label: 'Email',
-                sortable: true,
-              },
-              {
-                key: 'role',
-                label: 'Role',
-                render: (value) => {
-                  const colors: any = {
-                    ADMIN: 'bg-blue-900/30 text-blue-400 border-blue-500/20',
-                    IPCN: 'bg-green-900/30 text-green-400 border-green-500/20',
-                    IPCLN: 'bg-purple-900/30 text-purple-400 border-purple-500/20',
-                  }
-                  return (
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${colors[value] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                      {value}
-                    </span>
-                  )
-                }
-              },
-              {
-                      key: 'ruangan',
-                      label: 'Ruangan',
-                      render: (value) => value?.nama || '-'
-                    },
-              {
-                key: 'status',
-                label: 'Status',
-                render: (value) => (
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                    value === 'Aktif'
-                      ? 'bg-emerald-900/30 text-emerald-400'
-                      : 'bg-slate-800 text-slate-400'
-                  }`}>
-                    {value}
-                  </span>
-                )
-              },
-              {
-                key: 'id',
-                label: 'Aksi',
-                render: (value, row: User) => (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleStatus(value, row.status)}
-                      className="p-1.5 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"
-                      title={row.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
-                    >
-                      <ToggleRight size={18} className={row.status === 'Aktif' ? 'text-emerald-400' : 'text-slate-600'} />
-                    </button>
-                    <button
-                      onClick={() => openEditUser(row)}
-                      className="p-1.5 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"
-                      title="Edit User"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => openUserDetail(row)}
-                      className="p-1.5 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"
-                      title="Lihat Detail"
-                    >
-                      <Eye size={18} />
-                    </button>
-                  </div>
-                )
-              }
-            ]}
-            data={users}
-            searchable
-            searchPlaceholder="Cari Nama, Email, atau Role..."
-            paginated
-            pageSize={10}
-          />
-        </CardContent>
-      </Card>
+      </CrudModal>
 
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-lg overflow-hidden">
-            <CardHeader className="bg-slate-950 border-b border-white/10">
-              <CardTitle>Detail User</CardTitle>
+            <CardHeader className="bg-slate-50 border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex justify-between items-center">
+                Detail User
+                <Button variant="ghost" size="icon" onClick={() => setSelectedUser(null)} aria-label="Tutup">
+                  ×
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-500">Nama</p>
-                  <p className="font-semibold text-white">{selectedUser.nama}</p>
+                  <p className="text-xs text-slate-600">Nama</p>
+                  <p className="font-semibold text-slate-900">{selectedUser.nama}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Email</p>
-                  <p className="font-semibold text-white">{selectedUser.email}</p>
+                  <p className="text-xs text-slate-600">Email</p>
+                  <p className="font-semibold text-slate-900">{selectedUser.email}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Role</p>
-                  <p className="font-semibold text-white">{selectedUser.role}</p>
+                  <p className="text-xs text-slate-600">Role</p>
+                  <p className="font-semibold text-slate-900">{selectedUser.role}</p>
                 </div>
                 <div>
-                      <p className="text-xs text-slate-500">Ruangan</p>
-                      <p className="font-semibold text-white">{selectedUser.ruangan?.nama || '-'}</p>
+                      <p className="text-xs text-slate-600">Ruangan</p>
+                      <p className="font-semibold text-slate-900">{selectedUser.ruangan?.nama || '-'}</p>
                     </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
                 <SecondaryButton onClick={() => setSelectedUser(null)}>
                   Tutup
                 </SecondaryButton>

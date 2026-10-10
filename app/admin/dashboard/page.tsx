@@ -7,7 +7,7 @@ import axios from "axios"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { StatCard } from "@/components/ui/StatCard"
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
-import { Users, Building2, Stethoscope, ClipboardList, ArrowRight, Activity } from 'lucide-react'
+import { Users, Building2, Stethoscope, ClipboardList, ArrowRight, Activity, Database, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminDashboard() {
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
       />
 
       {/* Welcome Card */}
-      <div className="mb-8 p-4 md:p-6 bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg text-white shadow-lg dark:shadow-2xl">
+      <div className="mb-8 p-4 md:p-6 bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg text-slate-900 shadow-lg dark:shadow-2xl">
         <p className="text-lg font-medium">
           Selamat datang kembali, <strong>{session?.user?.name}</strong>
         </p>
@@ -110,24 +110,24 @@ export default function AdminDashboard() {
       </div>
 
       {/* Info Section */}
-      <div className="bg-[#172033]/50 backdrop-blur-xl rounded-[2rem] border border-white/5 p-8 shadow-2xl">
-        <h3 className="text-xl font-black text-white tracking-tight mb-6">
+      <div className="bg-slate-500 backdrop-blur-xl rounded-[2rem] border border-slate-200 p-8 shadow-2xl">
+        <h3 className="text-xl font-black text-slate-900 tracking-tight mb-6">
           Menu Manajemen
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link href="/admin/users" className="group p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-primary/30 transition-all duration-300">
-            <p className="font-bold text-white mb-2 flex items-center gap-2">
-              📋 Data Master
+          <Link href="/admin/users" className="group p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-primary/30 transition-all duration-300">
+            <p className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <Database size={16} className="text-slate-700" /> Data Master
               <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </p>
-            <p className="text-slate-400 text-sm font-medium">Kelola user, ruangan, dokter, dan diagnosa sistem secara terpusat.</p>
+            <p className="text-slate-600 text-sm font-medium">Kelola user, ruangan, dokter, dan diagnosa sistem secara terpusat.</p>
           </Link>
-          <Link href="/admin/settings" className="group p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-primary/30 transition-all duration-300">
-            <p className="font-bold text-white mb-2 flex items-center gap-2">
-              ⚙️ Pengaturan
+          <Link href="/admin/settings" className="group p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-primary/30 transition-all duration-300">
+            <p className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <Settings size={16} className="text-slate-700" /> Pengaturan
               <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </p>
-            <p className="text-slate-400 text-sm font-medium">Konfigurasi parameter sistem, audit log, dan hak akses keamanan.</p>
+            <p className="text-slate-600 text-sm font-medium">Konfigurasi parameter sistem, audit log, dan hak akses keamanan.</p>
           </Link>
         </div>
       </div>

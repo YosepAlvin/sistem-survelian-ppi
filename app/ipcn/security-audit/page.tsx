@@ -42,12 +42,12 @@ export default function SecurityAuditPage() {
   }, [])
 
   const getActionColor = (action: string) => {
-    if (action.includes('CREATE')) return 'text-emerald-400 bg-emerald-500/10'
+    if (action.includes('CREATE')) return 'text-emerald-700 bg-emerald-500/10'
     if (action.includes('UPDATE')) return 'text-blue-400 bg-blue-500/10'
-    if (action.includes('DELETE')) return 'text-rose-400 bg-rose-500/10'
-    if (action.includes('VERIFY')) return 'text-purple-400 bg-purple-500/10'
-    if (action.includes('CLOSE')) return 'text-amber-400 bg-amber-500/10'
-    return 'text-slate-400 bg-slate-500/10'
+    if (action.includes('DELETE')) return 'text-rose-600 bg-rose-500/10'
+    if (action.includes('VERIFY')) return 'text-purple-600 bg-purple-500/10'
+    if (action.includes('CLOSE')) return 'text-amber-600 bg-amber-500/10'
+    return 'text-slate-600 bg-slate-500/10'
   }
 
   return (
@@ -57,7 +57,7 @@ export default function SecurityAuditPage() {
         description="Rekam jejak seluruh aktivitas krusial dalam sistem PPI."
         actions={
           <div className="flex gap-3">
-            <Button onClick={fetchAuditTrail} variant="outline" className="border-slate-700 text-slate-200">
+            <Button onClick={fetchAuditTrail} variant="outline" className="border-slate-200 text-slate-800">
               Refresh Data
             </Button>
             <Link href="/ipcn/dashboard">
@@ -68,20 +68,20 @@ export default function SecurityAuditPage() {
       />
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-400">
+              <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-700">
                 <ShieldCheck size={24} />
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Status Sistem</p>
-                <p className="text-lg font-bold text-white">Terverifikasi</p>
+                <p className="text-lg font-bold text-slate-900">Terverifikasi</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-400">
@@ -89,29 +89,29 @@ export default function SecurityAuditPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Aktivitas</p>
-                <p className="text-lg font-bold text-white">{entries.length} Entries</p>
+                <p className="text-lg font-bold text-slate-900">{entries.length} Entries</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-purple-500/10 p-3 text-purple-400">
+              <div className="rounded-2xl bg-purple-500/10 p-3 text-purple-600">
                 <Activity size={24} />
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Modul Aktif</p>
-                <p className="text-lg font-bold text-white">Surveilans & Verifikasi</p>
+                <p className="text-lg font-bold text-slate-900">Surveilans & Verifikasi</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800 overflow-hidden">
-        <CardHeader className="bg-slate-950 border-b border-white/5">
-          <CardTitle className="text-white flex items-center gap-2">
+      <Card className="bg-white border-slate-200 overflow-hidden">
+        <CardHeader className="bg-white border-b border-slate-200">
+          <CardTitle className="text-slate-900 flex items-center gap-2">
             <History size={20} className="text-primary" />
             Audit History Log
           </CardTitle>
@@ -120,7 +120,7 @@ export default function SecurityAuditPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-950/50 text-slate-400 text-left border-b border-white/5">
+                <tr className="bg-slate-500 text-slate-600 text-left border-b border-slate-200">
                   <th className="px-6 py-4 font-bold uppercase tracking-wider">Timestamp</th>
                   <th className="px-6 py-4 font-bold uppercase tracking-wider">User</th>
                   <th className="px-6 py-4 font-bold uppercase tracking-wider">Action</th>
@@ -143,16 +143,16 @@ export default function SecurityAuditPage() {
                   </tr>
                 ) : (
                   entries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap text-slate-400 text-xs">
+                    <tr key={entry.id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600 text-xs">
                         {new Date(entry.timestamp).toLocaleString('id-ID')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center">
-                            <User size={12} className="text-slate-400" />
+                          <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center">
+                            <User size={12} className="text-slate-600" />
                           </div>
-                          <span className="text-slate-200 font-medium">{entry.userName || 'System'}</span>
+                          <span className="text-slate-800 font-medium">{entry.userName || 'System'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -162,19 +162,19 @@ export default function SecurityAuditPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="text-slate-200 font-semibold">{entry.moduleName || '-'}</span>
+                          <span className="text-slate-800 font-semibold">{entry.moduleName || '-'}</span>
                           <span className="text-[10px] text-slate-500 uppercase tracking-widest">{entry.entityType} #{entry.entityId}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="max-w-xs space-y-1">
                           {entry.previousValue && (
-                            <div className="text-[10px] text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 line-clamp-2">
+                            <div className="text-[10px] text-rose-600 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 line-clamp-2">
                               FROM: {entry.previousValue}
                             </div>
                           )}
                           {entry.newValue && (
-                            <div className="text-[10px] text-emerald-400 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 line-clamp-2">
+                            <div className="text-[10px] text-emerald-700 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 line-clamp-2">
                               TO: {entry.newValue}
                             </div>
                           )}

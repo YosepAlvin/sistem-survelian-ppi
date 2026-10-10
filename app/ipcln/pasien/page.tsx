@@ -11,6 +11,7 @@ import { FormField, FormInput, FormSelect, FormTextarea } from "@/components/ui/
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton"
 import { useToast } from "@/components/ui/Toast"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { CrudModal } from "@/components/ui/CrudModal"
 import { X, Search as SearchIcon, Trash2, Eye, UserPlus, LogOut } from 'lucide-react'
 import { formatTanggal, getCurrentDateTimeLocal } from '@/lib/date-utils'
 
@@ -51,6 +52,7 @@ export default function PasienPage() {
   const [ruanganList, setRuanganList] = useState<any[]>([])
   const [dokterList, setDokterList] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [selectedPasien, setSelectedPasien] = useState<Pasien | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null)
@@ -152,11 +154,11 @@ export default function PasienPage() {
     })
   }
 
-  const handleSavePatient = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSavePatient = async () => {
     if (!validateForm()) return
 
     try {
+      setIsSaving(true)
       if (isEditing && editingPasienId) {
         await axios.put(`/api/pasien/${editingPasienId}`, formData)
         showToast({
@@ -193,6 +195,8 @@ export default function PasienPage() {
         title: isEditing ? 'Gagal Memperbarui' : 'Gagal Mendaftarkan Pasien',
         message: err.response?.data?.error || err.message
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -283,9 +287,9 @@ export default function PasienPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/95 px-6 py-8 shadow-xl shadow-slate-950/40">
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/50">
           <PageHeader
             title="Daftar Pasien Aktif"
             description="Kelola data pasien yang sedang dirawat di rumah sakit"
@@ -297,30 +301,25 @@ export default function PasienPage() {
             actions={
               <Button 
                 onClick={() => {
-                  if (showForm) {
-                    setShowForm(false)
-                    setIsEditing(false)
-                    setEditingPasienId(null)
-                    setFormData({
-                      no_rm: '',
-                      nama: '',
-                      diagnosa: '',
-                      tgl_masuk: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }),
-                      tgl_lahir: '',
-                      jk: 'Perempuan',
-                      alamat: '',
-                      ruangan: '',
-                      dokter: ''
-                    })
-                  } else {
-                    setShowForm(true)
-                    setIsEditing(false)
-                    setEditingPasienId(null)
-                  }
+                  setShowForm(true)
+                  setIsEditing(false)
+                  setEditingPasienId(null)
+                  setFormData({
+                    no_rm: '',
+                    nama: '',
+                    diagnosa: '',
+                    tgl_masuk: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }),
+                    tgl_lahir: '',
+                    jk: 'Perempuan',
+                    alamat: '',
+                    ruangan: '',
+                    dokter: ''
+                  })
+                  setFormErrors({})
                 }}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
-                {showForm ? "Batal" : "Tambah Pasien Baru"}
+                Tambah Pasien Baru
               </Button>
             }
           />
@@ -329,8 +328,8 @@ export default function PasienPage() {
         {/* Patient Detail Modal */}
         {selectedPasien && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in">
-            <Card className="w-full max-w-xl bg-slate-900/95 border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-t-lg">
+            <Card className="w-full max-w-xl bg-white/95 border-slate-200">
+              <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-slate-900 rounded-t-lg">
                 <div className="flex justify-between items-center">
                   <CardTitle>Detail Data Pasien</CardTitle>
                   <button 
@@ -342,13 +341,13 @@ export default function PasienPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 font-semibold">No. RM</span>
-                  <span className="col-span-2 font-bold text-white">{selectedPasien.no_rm}</span>
+                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
+                  <span className="text-slate-600 font-semibold">No. RM</span>
+                  <span className="col-span-2 font-bold text-slate-900">{selectedPasien.no_rm}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 font-semibold">Nama Lengkap</span>
-                  <span className="col-span-2 font-bold text-white">{selectedPasien.nama}</span>
+                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
+                  <span className="text-slate-600 font-semibold">Nama Lengkap</span>
+                  <span className="col-span-2 font-bold text-slate-900">{selectedPasien.nama}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm border-b pb-3">
                   <span className="text-gray-500 font-semibold">Tgl Lahir</span>
@@ -362,9 +361,9 @@ export default function PasienPage() {
                   <span className="text-gray-500 font-semibold">Jenis Kelamin</span>
                   <span className="col-span-2">{selectedPasien.jk || "-"}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 font-semibold">Diagnosa</span>
-                  <span className="col-span-2 text-white">{selectedPasien.diagnosa}</span>
+                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-200 pb-3">
+                  <span className="text-slate-600 font-semibold">Diagnosa</span>
+                  <span className="col-span-2 text-slate-900">{selectedPasien.diagnosa}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm border-b pb-3">
                   <span className="text-gray-500 font-semibold">Tgl Masuk</span>
@@ -376,28 +375,28 @@ export default function PasienPage() {
                 </div>
 
                 {/* Riwayat Surveilans Harian */}
-                <div className="mt-8 pt-6 border-t border-slate-700">
-                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 bg-purple-600 rounded-full"></span>
                     Riwayat Perkembangan Surveilans
                   </h3>
-                  <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-950">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-slate-900 border-b border-slate-700">
-                          <th className="p-3 text-left font-semibold text-slate-200">Hari</th>
-                          <th className="p-3 text-left font-semibold text-slate-200">Tanggal</th>
-                          <th className="p-3 text-left font-semibold text-slate-200">Suhu</th>
-                          <th className="p-3 text-left font-semibold text-slate-200">Infeksi</th>
+                        <tr className="bg-white border-b border-slate-200">
+                          <th className="p-3 text-left font-semibold text-slate-800">Hari</th>
+                          <th className="p-3 text-left font-semibold text-slate-800">Tanggal</th>
+                          <th className="p-3 text-left font-semibold text-slate-800">Suhu</th>
+                          <th className="p-3 text-left font-semibold text-slate-800">Infeksi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedPasien.riwayat_surveilans && selectedPasien.riwayat_surveilans.length > 0 ? (
                           selectedPasien.riwayat_surveilans.map((log) => (
-                            <tr key={log.hari_ke} className="border-b border-slate-700 last:border-0 hover:bg-slate-900 transition-colors">
-                              <td className="p-3 font-semibold text-cyan-300">Ke-{log.hari_ke}</td>
-                              <td className="p-3 text-slate-300">{log.tanggal}</td>
-                              <td className="p-3 text-slate-300">{log.suhu}°C</td>
+                            <tr key={log.hari_ke} className="border-b border-slate-200 last:border-0 hover:bg-white transition-colors">
+                              <td className="p-3 font-semibold text-cyan-700">Ke-{log.hari_ke}</td>
+                          <td className="p-3 text-slate-700">{log.tanggal}</td>
+                          <td className="p-3 text-slate-700">{log.suhu}°C</td>
                               <td className="p-3">
                                 <span className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
                                   log.infeksi === 'Ya' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
@@ -409,7 +408,7 @@ export default function PasienPage() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={4} className="p-4 text-center text-gray-400 italic">Belum ada riwayat surveilans harian.</td>
+                            <td colSpan={4} className="p-4 text-center text-slate-500 italic">Belum ada riwayat surveilans harian.</td>
                           </tr>
                         )}
                       </tbody>
@@ -418,33 +417,33 @@ export default function PasienPage() {
                 </div>
 
                 {/* Riwayat Alat Medis */}
-                <div className="mt-8 pt-6 border-t border-slate-700">
-                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
                     Riwayat Pemasangan Alat Medis
                   </h3>
-                  <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-950">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-slate-900 border-b border-slate-700">
-                          <th className="p-3 text-left font-semibold text-slate-200">Jenis Alat</th>
-                          <th className="p-3 text-left font-semibold text-slate-200">Pasang</th>
-                          <th className="p-3 text-left font-semibold text-slate-200">Lepas</th>
-                          <th className="p-3 text-center font-semibold text-slate-200">Hari</th>
-                          <th className="p-3 text-right font-semibold text-slate-200">Status</th>
+                        <tr className="bg-white border-b border-slate-200">
+                          <th className="p-3 text-left font-semibold text-slate-800">Jenis Alat</th>
+                          <th className="p-3 text-left font-semibold text-slate-800">Pasang</th>
+                          <th className="p-3 text-left font-semibold text-slate-800">Lepas</th>
+                          <th className="p-3 text-center font-semibold text-slate-800">Hari</th>
+                          <th className="p-3 text-right font-semibold text-slate-800">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedPasien.riwayat_alat && selectedPasien.riwayat_alat.length > 0 ? (
                           selectedPasien.riwayat_alat.map((alat) => (
-                            <tr key={alat.id} className="border-b border-slate-700 last:border-0 hover:bg-slate-900 transition-colors">
-                              <td className="p-3 font-semibold text-white">{alat.jenis_alat}</td>
-                              <td className="p-3 text-slate-400">{new Date(alat.tanggal_pasang).toLocaleDateString('id-ID')}</td>
-                              <td className="p-3 text-slate-400">{alat.tanggal_lepas ? new Date(alat.tanggal_lepas).toLocaleDateString('id-ID') : "-"}</td>
-                              <td className="p-3 text-center text-slate-200 font-bold">{alat.device_day}</td>
+                            <tr key={alat.id} className="border-b border-slate-200 last:border-0 hover:bg-white transition-colors">
+                              <td className="p-3 font-semibold text-slate-900">{alat.jenis_alat}</td>
+                              <td className="p-3 text-slate-600">{new Date(alat.tanggal_pasang).toLocaleDateString('id-ID')}</td>
+                              <td className="p-3 text-slate-600">{alat.tanggal_lepas ? new Date(alat.tanggal_lepas).toLocaleDateString('id-ID') : "-"}</td>
+                              <td className="p-3 text-center text-slate-800 font-bold">{alat.device_day}</td>
                               <td className="p-3 text-right">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                  alat.masih_terpasang ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-500/10 text-slate-500 border border-white/5'
+                                  alat.masih_terpasang ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20' : 'bg-slate-500/10 text-slate-500 border border-slate-200'
                                 }`}>
                                   {alat.masih_terpasang ? 'Aktif' : 'Dilepas'}
                                 </span>
@@ -453,7 +452,7 @@ export default function PasienPage() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="p-4 text-center text-gray-400 italic">Belum ada riwayat pemasangan alat.</td>
+                            <td colSpan={5} className="p-4 text-center text-slate-500 italic">Belum ada riwayat pemasangan alat.</td>
                           </tr>
                         )}
                       </tbody>
@@ -468,130 +467,141 @@ export default function PasienPage() {
           </div>
         )}
 
-        {/* Patient Registration Form */}
-        {showForm && (
-          <Card className="mb-10 bg-slate-900/95 border border-slate-800">
-            <CardHeader className="bg-slate-800 text-white rounded-t-lg">
-              <CardTitle>{isEditing ? "Edit Data Pasien" : "Registrasi Pasien Baru"}</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSavePatient} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="No. RM" required error={formErrors.no_rm}>
-                  <FormInput 
-                    type="text" 
-                    placeholder="Contoh: 12-34-56" 
-                    value={formData.no_rm}
-                    onChange={e => {
-                      setFormData({...formData, no_rm: e.target.value})
-                      if (formErrors.no_rm) setFormErrors({...formErrors, no_rm: ''})
-                    }}
-                    error={!!formErrors.no_rm}
-                    className="bg-slate-800 text-white border-slate-700"
-                  />
-                </FormField>
-                <FormField label="Nama Pasien" required error={formErrors.nama}>
-                  <FormInput 
-                    type="text" 
-                    placeholder="Nama Lengkap" 
-                    value={formData.nama}
-                    onChange={e => {
-                      setFormData({...formData, nama: e.target.value})
-                      if (formErrors.nama) setFormErrors({...formErrors, nama: ''})
-                    }}
-                    error={!!formErrors.nama}
-                  />
-                </FormField>
-                <FormField label="Tanggal Lahir">
-                  <FormInput 
-                    type="date" 
-                    value={formData.tgl_lahir}
-                    onChange={e => setFormData({...formData, tgl_lahir: e.target.value})}
-                  />
-                </FormField>
-                <FormField label="Jenis Kelamin">
-                  <FormSelect 
-                    value={formData.jk}
-                    onChange={e => setFormData({...formData, jk: e.target.value})}
-                  >
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                  </FormSelect>
-                </FormField>
-                <FormField label="Ruangan" required error={formErrors.ruangan}>
-                  <FormSelect 
-                    value={formData.ruangan}
-                    onChange={e => {
-                      setFormData({...formData, ruangan: e.target.value})
-                      if (formErrors.ruangan) setFormErrors({...formErrors, ruangan: ''})
-                    }}
-                    error={!!formErrors.ruangan}
-                  >
-                    <option value="">Pilih Ruangan</option>
-                    {ruanganList.map((r: any) => (
-                      <option key={r.id} value={r.id}>{r.nama}</option>
-                    ))}
-                  </FormSelect>
-                </FormField>
-                <FormField label="Dokter" required error={formErrors.dokter}>
-                  <FormSelect 
-                    value={formData.dokter}
-                    onChange={e => {
-                      setFormData({...formData, dokter: e.target.value})
-                      if (formErrors.dokter) setFormErrors({...formErrors, dokter: ''})
-                    }}
-                    error={!!formErrors.dokter}
-                  >
-                    <option value="">Pilih Dokter</option>
-                    {dokterList.map((d: any) => (
-                      <option key={d.id} value={d.id}>{d.nama} ({d.spesialisasi})</option>
-                    ))}
-                  </FormSelect>
-                </FormField>
-                <FormField label="Diagnosa Awal" required error={formErrors.diagnosa}>
-                  <FormInput 
-                    type="text" 
-                    placeholder="Diagnosa Medis" 
-                    value={formData.diagnosa}
-                    onChange={e => {
-                      setFormData({...formData, diagnosa: e.target.value})
-                      if (formErrors.diagnosa) setFormErrors({...formErrors, diagnosa: ''})
-                    }}
-                    error={!!formErrors.diagnosa}
-                  />
-                </FormField>
-                <FormField label="Tanggal Masuk" required error={formErrors.tgl_masuk}>
-                  <FormInput 
-                    type="date" 
-                    value={formData.tgl_masuk}
-                    onChange={e => {
-                      setFormData({...formData, tgl_masuk: e.target.value})
-                      if (formErrors.tgl_masuk) setFormErrors({...formErrors, tgl_masuk: ''})
-                    }}
-                    error={!!formErrors.tgl_masuk}
-                  />
-                </FormField>
-                <div className="md:col-span-2">
-                  <FormField label="Alamat">
-                    <FormTextarea 
-                      placeholder="Alamat lengkap pasien" 
-                      rows={3}
-                      value={formData.alamat}
-                      onChange={e => setFormData({...formData, alamat: e.target.value})}
-                    />
-                  </FormField>
-                </div>
-                <div className="md:col-span-2 flex gap-3">
-                  <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">
-                    Simpan Data Pasien
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+        {/* CRUD Modal */}
+        <CrudModal
+          isOpen={showForm}
+          onClose={() => {
+            setShowForm(false)
+            setIsEditing(false)
+            setEditingPasienId(null)
+            setFormErrors({})
+            setFormData({
+              no_rm: '',
+              nama: '',
+              diagnosa: '',
+              tgl_masuk: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }),
+              tgl_lahir: '',
+              jk: 'Perempuan',
+              alamat: '',
+              ruangan: '',
+              dokter: ''
+            })
+          }}
+          title={isEditing ? "Edit Data Pasien" : "Registrasi Pasien Baru"}
+          loading={isSaving}
+          onSubmit={handleSavePatient}
+          submitLabel="Simpan Data Pasien"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="No. RM" required error={formErrors.no_rm}>
+              <FormInput 
+                type="text" 
+                placeholder="Contoh: 12-34-56" 
+                value={formData.no_rm}
+                onChange={e => {
+                  setFormData({...formData, no_rm: e.target.value})
+                  if (formErrors.no_rm) setFormErrors({...formErrors, no_rm: ''})
+                }}
+                error={!!formErrors.no_rm}
+                className="bg-slate-50 text-slate-900 border-slate-200"
+              />
+            </FormField>
+            <FormField label="Nama Pasien" required error={formErrors.nama}>
+              <FormInput 
+                type="text" 
+                placeholder="Nama Lengkap" 
+                value={formData.nama}
+                onChange={e => {
+                  setFormData({...formData, nama: e.target.value})
+                  if (formErrors.nama) setFormErrors({...formErrors, nama: ''})
+                }}
+                error={!!formErrors.nama}
+              />
+            </FormField>
+            <FormField label="Tanggal Lahir">
+              <FormInput 
+                type="date" 
+                value={formData.tgl_lahir}
+                onChange={e => setFormData({...formData, tgl_lahir: e.target.value})}
+              />
+            </FormField>
+            <FormField label="Jenis Kelamin">
+              <FormSelect 
+                value={formData.jk}
+                onChange={e => setFormData({...formData, jk: e.target.value})}
+              >
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </FormSelect>
+            </FormField>
+            <FormField label="Ruangan" required error={formErrors.ruangan}>
+              <FormSelect 
+                value={formData.ruangan}
+                onChange={e => {
+                  setFormData({...formData, ruangan: e.target.value})
+                  if (formErrors.ruangan) setFormErrors({...formErrors, ruangan: ''})
+                }}
+                error={!!formErrors.ruangan}
+              >
+                <option value="">Pilih Ruangan</option>
+                {ruanganList.map((r: any) => (
+                  <option key={r.id} value={r.id}>{r.nama}</option>
+                ))}
+              </FormSelect>
+            </FormField>
+            <FormField label="Dokter" required error={formErrors.dokter}>
+              <FormSelect 
+                value={formData.dokter}
+                onChange={e => {
+                  setFormData({...formData, dokter: e.target.value})
+                  if (formErrors.dokter) setFormErrors({...formErrors, dokter: ''})
+                }}
+                error={!!formErrors.dokter}
+              >
+                <option value="">Pilih Dokter</option>
+                {dokterList.map((d: any) => (
+                  <option key={d.id} value={d.id}>{d.nama} ({d.spesialisasi})</option>
+                ))}
+              </FormSelect>
+            </FormField>
+            <FormField label="Diagnosa Awal" required error={formErrors.diagnosa}>
+              <FormInput 
+                type="text" 
+                placeholder="Diagnosa Medis" 
+                value={formData.diagnosa}
+                onChange={e => {
+                  setFormData({...formData, diagnosa: e.target.value})
+                  if (formErrors.diagnosa) setFormErrors({...formErrors, diagnosa: ''})
+                }}
+                error={!!formErrors.diagnosa}
+              />
+            </FormField>
+            <FormField label="Tanggal Masuk" required error={formErrors.tgl_masuk}>
+              <FormInput 
+                type="date" 
+                value={formData.tgl_masuk}
+                onChange={e => {
+                  setFormData({...formData, tgl_masuk: e.target.value})
+                  if (formErrors.tgl_masuk) setFormErrors({...formErrors, tgl_masuk: ''})
+                }}
+                error={!!formErrors.tgl_masuk}
+              />
+            </FormField>
+            <div className="md:col-span-2">
+              <FormField label="Alamat">
+                <FormTextarea 
+                  placeholder="Alamat lengkap pasien" 
+                  rows={3}
+                  value={formData.alamat}
+                  onChange={e => setFormData({...formData, alamat: e.target.value})}
+                />
+              </FormField>
+            </div>
+          </div>
+        </CrudModal>
 
         {/* Patient List DataTable */}
-        <Card className="bg-slate-900/95 border-slate-800">
+        <Card className="bg-white/95 border-slate-200">
           <CardHeader>
             <CardTitle>Daftar Pasien</CardTitle>
           </CardHeader>
@@ -629,18 +639,18 @@ export default function PasienPage() {
                     label: 'Aksi',
                     render: (value: string, row: Pasien) => (
                       <div className="flex gap-3">
-                        <Link href={`/ipcln/surveilans-harian/${value}`} className="text-cyan-300 hover:text-white font-medium text-sm transition-colors">
+                        <Link href={`/ipcln/surveilans-harian/${value}`} className="text-cyan-700 hover:text-slate-900 font-medium text-sm transition-colors">
                           Input Harian
                         </Link>
                         <button 
                           onClick={() => setSelectedPasien(row)}
-                          className="text-cyan-300 hover:text-white font-medium text-sm transition-colors"
+                          className="text-cyan-700 hover:text-slate-900 font-medium text-sm transition-colors"
                         >
                           Detail
                         </button>
                         <button 
                           onClick={() => handleEditPatient(row)}
-                          className="text-purple-300 hover:text-white font-medium text-sm transition-colors"
+                          className="text-purple-700 hover:text-slate-900 font-medium text-sm transition-colors"
                         >
                           Edit
                         </button>
@@ -655,27 +665,27 @@ export default function PasienPage() {
                                 tanggal_transfer: new Date().toISOString().slice(0, 16)
                               })
                             }}
-                            className="text-orange-300 hover:text-white font-medium text-sm transition-colors"
+                            className="text-orange-700 hover:text-slate-900 font-medium text-sm transition-colors"
                           >
                             Pindahkan
                           </button>
                         )}
                         {row.status_pulang === 'PENDING' && (
-                          <span className="text-blue-300 text-xs italic font-medium">
+                          <span className="text-blue-700 text-xs italic font-medium">
                             Menunggu verifikasi IPCN
                           </span>
                         )}
                         {row.status_pulang === 'NONE' && !row.hasActiveInfection && !row.hasActiveDevice && (
                           <button 
                             onClick={() => setPatientToPulang(value)}
-                            className="text-emerald-300 hover:text-white font-medium text-sm transition-colors flex items-center gap-1"
+                            className="text-emerald-700 hover:text-slate-900 font-medium text-sm transition-colors flex items-center gap-1"
                           >
                             <LogOut size={14} />
                             Pulangkan
                           </button>
                         )}
                         {row.status_pulang === 'NONE' && (row.hasActiveInfection || row.hasActiveDevice) && (
-                          <span className="text-amber-400 text-xs italic">
+                          <span className="text-amber-700 text-xs italic">
                             {row.hasActiveInfection && row.hasActiveDevice 
                               ? "Masih ada infeksi & alat terpasang" 
                               : row.hasActiveInfection 
@@ -685,7 +695,7 @@ export default function PasienPage() {
                         )}
                         <button 
                           onClick={() => setPatientToDelete(value)}
-                          className="text-rose-300 hover:text-white font-medium text-sm transition-colors"
+                          className="text-rose-700 hover:text-slate-900 font-medium text-sm transition-colors"
                         >
                           Hapus
                         </button>
@@ -729,8 +739,8 @@ export default function PasienPage() {
         {/* Transfer Modal */}
         {patientToTransfer && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in">
-            <Card className="w-full max-w-lg bg-slate-900/95 border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
+            <Card className="w-full max-w-lg bg-white/95 border-slate-200">
+              <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-slate-900 rounded-t-lg">
                 <div className="flex justify-between items-center">
                   <CardTitle>Pindahkan Pasien</CardTitle>
                   <button 
@@ -742,19 +752,19 @@ export default function PasienPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-                  <div className="text-sm text-slate-300">
-                    <span className="font-bold text-white">{patientToTransfer.nama}</span> ({patientToTransfer.no_rm})
+                <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+                  <div className="text-sm text-slate-700">
+                    <span className="font-bold text-slate-900">{patientToTransfer.nama}</span> ({patientToTransfer.no_rm})
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-200 mb-2">Ruangan Tujuan</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Ruangan Tujuan</label>
                     <select
                       value={transferForm.ruangan_tujuan_id}
                       onChange={(e) => setTransferForm({...transferForm, ruangan_tujuan_id: e.target.value})}
-                      className="w-full p-3 bg-slate-800 text-white border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full p-3 bg-slate-50 text-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="">Pilih Ruangan</option>
                       {ruanganList.map((r) => (
@@ -764,11 +774,11 @@ export default function PasienPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-semibold text-slate-200 mb-2">Dokter Penanggung Jawab (Opsional)</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Dokter Penanggung Jawab (Opsional)</label>
                     <select
                       value={transferForm.dokter_baru_id}
                       onChange={(e) => setTransferForm({...transferForm, dokter_baru_id: e.target.value})}
-                      className="w-full p-3 bg-slate-800 text-white border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full p-3 bg-slate-50 text-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="">Tetap Dokter Saat Ini</option>
                       {dokterList.map((d) => (
@@ -778,31 +788,31 @@ export default function PasienPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-semibold text-slate-200 mb-2">Tanggal & Waktu Transfer</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Tanggal & Waktu Transfer</label>
                     <input
                       type="datetime-local"
                       value={transferForm.tanggal_transfer}
                       onChange={(e) => setTransferForm({...transferForm, tanggal_transfer: e.target.value})}
-                      className="w-full p-3 bg-slate-800 text-white border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full p-3 bg-slate-50 text-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-semibold text-slate-200 mb-2">Alasan Transfer (Opsional)</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Alasan Transfer (Opsional)</label>
                     <textarea
                       value={transferForm.alasan}
                       onChange={(e) => setTransferForm({...transferForm, alasan: e.target.value})}
                       rows={3}
                       placeholder="Masukkan alasan transfer..."
-                      className="w-full p-3 bg-slate-800 text-white border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full p-3 bg-slate-50 text-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
               </CardContent>
-              <div className="bg-slate-800 p-4 flex justify-end gap-3 rounded-b-lg border-t border-slate-700">
+              <div className="bg-slate-50 p-4 flex justify-end gap-3 rounded-b-lg border-t border-slate-200">
                 <button 
                   onClick={() => setPatientToTransfer(null)} 
-                  className="px-4 py-2 text-slate-200 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                  className="px-4 py-2 text-white bg-slate-600 hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   Batal
                 </button>

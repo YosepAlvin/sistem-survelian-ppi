@@ -182,9 +182,9 @@ export default function IPCLNSaranAlatPage() {
       {showStatusModal && selectedSaran && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
-            <div className="bg-purple-600 p-4 text-white flex justify-between items-center">
+            <div className="bg-purple-600 p-4 text-slate-900 flex justify-between items-center">
               <h2 className="text-xl font-bold">Beri Tanggapan</h2>
-              <button onClick={() => setShowStatusModal(false)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+              <button onClick={() => setShowStatusModal(false)} className="text-slate-900 hover:text-gray-200 text-2xl">&times;</button>
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-2">

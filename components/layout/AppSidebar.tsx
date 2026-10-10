@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -54,16 +55,16 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
 
   const getActiveStyles = (color: string) => {
     const styles: { [key: string]: string } = {
-      'blue': 'bg-blue-500/10 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.1)]',
-      'green': 'bg-emerald-500/10 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]',
-      'purple': 'bg-purple-500/10 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.1)]',
+      'blue': 'bg-blue-50 text-blue-600 shadow-[0_0_20px_rgba(59,130,246,0.1)]',
+      'green': 'bg-emerald-50 text-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.1)]',
+      'purple': 'bg-purple-50 text-purple-600 shadow-[0_0_20px_rgba(168,85,247,0.1)]',
     }
     return styles[color] || styles['blue']
   }
 
   const baseClasses = cn(
     'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative',
-    'text-slate-400 hover:text-white hover:bg-white/5'
+    'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
   )
 
   if (children && children.length > 0) {
@@ -97,7 +98,7 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
         </button>
         {isExpanded && !isCollapsed && (
           <div className="pl-4 mt-1 space-y-1 animate-fade-in-up">
-            <div className="absolute left-6 top-0 bottom-0 w-px bg-white/5" />
+            <div className="absolute left-6 top-0 bottom-0 w-px bg-slate-200" />
             {children.map((child, idx) => (
               <MenuItem
                 key={idx}
@@ -128,12 +129,12 @@ const MenuItem: React.FC<MenuItemWithRoleProps> = ({
   if (onClick) {
     return (
       <button
-        onClick={() => {
-          onClick()
-          onItemClick?.()
-        }}
-        className={cn(baseClasses, 'hover:bg-red-500/10 hover:text-red-400')}
-      >
+          onClick={() => {
+            onClick()
+            onItemClick?.()
+          }}
+          className={cn(baseClasses, 'hover:bg-red-50 hover:text-red-600')}
+        >
         {content}
       </button>
     )
@@ -161,10 +162,34 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
   const userRole = (session?.user as any)?.role?.toUpperCase()
 
   const getRoleTheme = (role: string) => {
-    const themes: { [key: string]: { color: string; label: string } } = {
-      'ADMIN': { color: 'blue', label: 'Administrator' },
-      'IPCN': { color: 'green', label: 'IPCN Specialist' },
-      'IPCLN': { color: 'purple', label: 'IPCLN Officer' },
+    const themes: { [key: string]: { color: string; label: string; bg: string; border: string; text: string; hoverBg: string; activeBg: string } } = {
+      'ADMIN': { 
+        color: 'blue', 
+        label: 'Administrator',
+        bg: 'bg-blue-50',
+        border: 'border-blue-200',
+        text: 'text-blue-700',
+        hoverBg: 'hover:bg-blue-100',
+        activeBg: 'bg-blue-50'
+      },
+      'IPCN': { 
+        color: 'green', 
+        label: 'IPCN Specialist',
+        bg: 'bg-emerald-50',
+        border: 'border-emerald-200',
+        text: 'text-emerald-700',
+        hoverBg: 'hover:bg-emerald-100',
+        activeBg: 'bg-emerald-50'
+      },
+      'IPCLN': { 
+        color: 'purple', 
+        label: 'IPCLN Officer',
+        bg: 'bg-purple-50',
+        border: 'border-purple-200',
+        text: 'text-purple-700',
+        hoverBg: 'hover:bg-purple-100',
+        activeBg: 'bg-purple-50'
+      },
     }
     return themes[role] || themes['ADMIN']
   }
@@ -237,6 +262,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
             { label: 'Master Antibiotik', href: '/admin/antibiotik', icon: <FileText size={18} />, isActive: isActive('/admin/antibiotik') }
           ]
         },
+        { label: 'Profile', href: '/profile', icon: <UserIcon size={20} />, isActive: isActive('/profile') },
+        { label: 'Settings', href: '/settings', icon: <Settings size={20} />, isActive: isActive('/settings') },
         { label: 'System Settings', href: '/admin/settings', icon: <Settings size={20} />, isActive: isActive('/admin/settings') },
         { label: 'Sign Out', icon: <LogOut size={20} />, onClick: () => signOut({ callbackUrl: '/auth/login' }) }
       ]
@@ -281,6 +308,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
           ]
         },
         { label: 'Grafik Tren PPI', href: '/ipcn/grafik/bulanan', icon: <BarChart3 size={20} />, isActive: isActive('/ipcn/grafik') },
+        { label: 'Profile', href: '/profile', icon: <UserIcon size={20} />, isActive: isActive('/profile') },
+        { label: 'Settings', href: '/settings', icon: <Settings size={20} />, isActive: isActive('/settings') },
         { label: 'Sign Out', icon: <LogOut size={20} />, onClick: () => signOut({ callbackUrl: '/auth/login' }) }
       ]
     } else if (userRole === 'IPCLN') {
@@ -293,6 +322,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
         { label: 'Penggunaan Antibiotik', href: '/ipcln/antibiotik', icon: <FileText size={20} />, isActive: isActive('/ipcln/antibiotik') },
         { label: 'Saran Alat dari IPCN', href: '/ipcln/saran-alat', icon: <Activity size={20} />, isActive: isActive('/ipcln/saran-alat') },
         { label: 'Rekap Laporan', href: '/ipcln/surveilans-bulanan', icon: <BarChart3 size={20} />, isActive: isActive('/ipcln/surveilans-bulanan') },
+        { label: 'Profile', href: '/profile', icon: <UserIcon size={20} />, isActive: isActive('/profile') },
+        { label: 'Settings', href: '/settings', icon: <Settings size={20} />, isActive: isActive('/settings') },
         { label: 'Sign Out', icon: <LogOut size={20} />, onClick: () => signOut({ callbackUrl: '/auth/login' }) }
       ]
     }
@@ -306,26 +337,27 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
   return (
     <>
       {isMobileOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsMobileOpen(false)} />
+        <div className="fixed inset-0 bg-slate-50 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsMobileOpen(false)} />
       )}
 
       <aside className={cn(
-        'fixed left-0 top-0 h-full bg-[#0B1220] border-r border-white/5 transition-all duration-500 z-50 flex flex-col',
+        'fixed left-0 top-0 h-full border-r transition-all duration-500 z-50 flex flex-col',
+        theme.bg,
+        theme.border,
         isCollapsed ? 'w-20' : 'w-72',
         isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       )}>
-        <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
+        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", 
-                theme.color === 'blue' ? 'bg-blue-600' : theme.color === 'green' ? 'bg-emerald-600' : 'bg-purple-600'
-              )}>
-                <Activity size={18} className="text-white" />
-              </div>
-              <span className="font-black text-xl tracking-tighter text-white">BUDI RAHAYU</span>
+              <Image src="/logo.png" alt="Logo RS Budi Rahayu" width={48} height={48} className="w-12 h-12 object-contain" />
+              <span className="font-black text-xl tracking-tighter text-slate-900">BUDI RAHAYU</span>
             </div>
           )}
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400">
+          {isCollapsed && (
+             <Image src="/logo.png" alt="Logo RS Budi Rahayu" width={40} height={40} className="w-10 h-10 object-contain" />
+          )}
+          <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-600">
             {isCollapsed ? <Menu size={20} /> : <X size={20} />}
           </button>
         </div>
@@ -339,15 +371,35 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ isMobileOpen, setIsMobileOpen }
           </div>
         </div>
 
-        <div className="p-4 border-t border-white/5">
+        <div className="p-4 border-t border-slate-200">
           {!isCollapsed && (
-            <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-white/10">
-                <UserIcon size={20} className="text-slate-300" />
-              </div>
+            <div className={cn("bg-white rounded-2xl p-4 flex items-center gap-3 border", theme.border)}>
+              {(session?.user as any)?.profileImage ? (
+                <div className="relative w-10 h-10 shrink-0">
+                  <Image
+                    src={(session?.user as any)?.profileImage}
+                    alt={session?.user?.name || 'User'}
+                    fill
+                    sizes="40px"
+                    className="rounded-full object-cover border"
+                  />
+                </div>
+              ) : (
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center border",
+                  theme.color === 'blue' ? 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-200' :
+                  theme.color === 'green' ? 'bg-gradient-to-br from-emerald-200 to-emerald-300 border-emerald-200' :
+                  'bg-gradient-to-br from-purple-200 to-purple-300 border-purple-200'
+                )}>
+                  <UserIcon size={20} className={cn(
+                    theme.color === 'blue' ? 'text-blue-700' :
+                    theme.color === 'green' ? 'text-emerald-700' :
+                    'text-purple-700'
+                  )} />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{session?.user?.name || 'User'}</p>
-                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{theme.label}</p>
+                <p className="text-sm font-bold text-slate-900 truncate">{session?.user?.name || 'User'}</p>
+                <p className={cn("text-[10px] font-medium uppercase tracking-wider", theme.text)}>{theme.label}</p>
               </div>
             </div>
           )}
